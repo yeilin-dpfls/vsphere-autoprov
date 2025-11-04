@@ -36,7 +36,7 @@ flowchart TD
     C --> E[구성 완료된 VyOS Router]
     D --> F[구성 완료된 Linux Server]
 
----
+
 
 🧠 기술 스택 (Tech Stack)
 구분	기술
@@ -44,8 +44,6 @@ flowchart TD
 가상화	VMware vSphere
 네트워킹	VyOS
 스크립트	Python, YAML
-
----
 
 
 🛠️ 향후 계획 (Roadmap)
@@ -58,8 +56,6 @@ flowchart TD
 
  Windows Server 자동화 역할 추가
 
----
-
 
 👥 팀 소개 (Team)
 이름	역할	GitHub
@@ -69,7 +65,6 @@ flowchart TD
 
 박승호 (Park)	자동화 엔지니어	@jisoo-park
 
----
 
 
 🤝 기여 방법 (Contributing)
