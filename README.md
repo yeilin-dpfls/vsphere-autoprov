@@ -36,22 +36,7 @@ flowchart TD
     C --> E[Configured VyOS Router]
     D --> F[Configured Application Server]
 
-📁 Project Structure
-pgsql
-코드 복사
-vsphere-autoprov/
-├── inventory/
-│   ├── hosts.ini
-│   └── group_vars/
-├── roles/
-│   ├── vyos/
-│   └── server/
-├── playbooks/
-│   ├── deploy_vyos.yaml
-│   ├── deploy_server.yaml
-│   └── site.yaml
-├── ansible.cfg
-└── README.md
+
 
 🚀 Quick Start
 1️⃣ Prerequisites
