@@ -35,3 +35,43 @@ flowchart TD
     B --> D[VM Template (Server)]
     C --> E[구성 완료된 VyOS Router]
     D --> F[구성 완료된 Linux Server]
+
+
+
+🧠 기술 스택 (Tech Stack)
+구분	기술
+자동화	Ansible
+가상화	VMware vSphere
+네트워킹	VyOS
+스크립트	Python, YAML
+
+🛠️ 향후 계획 (Roadmap)
+
+ vSphere 데이터스토어 클러스터 지원
+
+ Terraform 연동
+
+ 동적 인벤토리 생성 기능
+
+ Windows Server 자동화 역할 추가
+
+👥 팀 소개 (Team)
+이름	역할	GitHub
+김성찬 (Kim )	프로젝트 리드 / 자동화 엔지니어	@seongchan-kim
+
+최예린 (Lee )	자동화 엔지니어	@hyunwoo-lee
+
+박승호 (Park)	자동화 엔지니어	@jisoo-park
+
+🤝 기여 방법 (Contributing)
+
+이 프로젝트는 오픈 협업을 지향합니다.
+이슈 제기, 버그 리포트, 기능 제안 또는 PR(Pull Request)을 통해 자유롭게 기여해주세요.
+PR 제출 전에는 코딩 스타일과 역할 구조를 확인해주시기 바랍니다.
+
+
+
+
+
+
+
