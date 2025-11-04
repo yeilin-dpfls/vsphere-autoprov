@@ -2,7 +2,6 @@
 
 > **VMware vSphere 환경에서 VyOS 및 서버 가상 머신을 자동으로 프로비저닝하고 구성하는 Ansible 기반 자동화 시스템**
 
-![VMware + Ansible](https://github.com/ansible/ansible/raw/devel/docs/docsite/rst/images/ansible_vsphere.png)
 
 ---
 
@@ -43,7 +42,7 @@ flowchart TD
 자동화	Ansible
 가상화	VMware vSphere
 네트워킹	VyOS
-스크립트	Python, YAML
+스크립트	Linux, YAML
 
 
 🛠️ 향후 계획 (Roadmap)
@@ -54,14 +53,16 @@ flowchart TD
 
  동적 인벤토리 생성 기능
 
- Windows Server 자동화 역할 추가
+ Zabbix 모니터링 
+
+ Springboot  Server 자동화 역할 추가
 
 
 👥 팀 소개 (Team)
 이름	역할	GitHub
 김성찬 (Kim )	프로젝트 리드 / 자동화 엔지니어	@seongchan-kim
 
-최예린 (choi)	자동화 엔지니어	@hyunwoo-lee
+최예린 (choi)	자동화 엔지니어	@yeilin-dpfls
 
 박승호 (Park)	자동화 엔지니어	@jisoo-park
 
