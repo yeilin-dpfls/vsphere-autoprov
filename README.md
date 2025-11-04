@@ -37,7 +37,6 @@ flowchart TD
     D --> F[구성 완료된 Linux Server]
 
 
-
 🧠 기술 스택 (Tech Stack)
 구분	기술
 자동화	Ansible
@@ -59,7 +58,7 @@ flowchart TD
 이름	역할	GitHub
 김성찬 (Kim )	프로젝트 리드 / 자동화 엔지니어	@seongchan-kim
 
-최예린 (Lee )	자동화 엔지니어	@hyunwoo-lee
+최예린 (choi)	자동화 엔지니어	@hyunwoo-lee
 
 박승호 (Park)	자동화 엔지니어	@jisoo-park
 
