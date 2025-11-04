@@ -1,105 +1,37 @@
-# vsphere-autoprov
-Ansible-based automation system for provisioning and configuring virtual machines (VyOS, Server) on VMware vSphere.Ansible-based automation system for provisioning and configuring virtual machines (VyOS, Server) on VMware vSphere
-
-
 # 🚀 vSphere AutoProv
-> **Ansible-based automation system for provisioning and configuring virtual machines (VyOS & Server) on VMware vSphere.**
+
+> **VMware vSphere 환경에서 VyOS 및 서버 가상 머신을 자동으로 프로비저닝하고 구성하는 Ansible 기반 자동화 시스템**
 
 ![VMware + Ansible](https://github.com/ansible/ansible/raw/devel/docs/docsite/rst/images/ansible_vsphere.png)
 
 ---
 
-## ✨ Overview
+## ✨ 개요 (Overview)
 
-**vSphere AutoProv** is a fully automated provisioning framework that leverages **Ansible** to deploy and configure **VyOS routers** and **Linux servers** on **VMware vSphere**.  
-It simplifies complex multi-VM setups into a single, repeatable playbook — ideal for building lab environments, infrastructure templates, or production-ready systems.
+**vSphere AutoProv**는 **Ansible**을 기반으로 한 자동화 프레임워크로,  
+**VMware vSphere 환경**에서 **VyOS 라우터**와 **Linux 서버**를 신속하고 일관성 있게 배포할 수 있도록 설계되었습니다.  
 
----
-
-## 🧩 Features
-
-- ⚙️ **Automated VM Provisioning** — Create, clone, and power on VMs on vSphere automatically.  
-- 🌐 **VyOS Configuration** — Apply network configurations dynamically (interfaces, routes, firewall, etc).  
-- 🖥️ **Server Initialization** — Configure OS settings, users, SSH keys, and packages with Ansible roles.  
-- 🔁 **Idempotent Design** — Run playbooks multiple times without side effects.  
-- 📦 **Modular Roles** — Clean role-based structure for easy maintenance and expansion.  
+복잡한 멀티 VM 생성 및 초기 설정 과정을 하나의 **재사용 가능한 Playbook**으로 단순화하여  
+랩 환경, 테스트베드, 인프라 템플릿 및 운영 환경 구축에 모두 활용할 수 있습니다.
 
 ---
 
-## 🏗️ Architecture
+## 🧩 주요 기능 (Key Features)
+
+- ⚙️ **자동 VM 프로비저닝** — vSphere 상에서 템플릿 기반 가상 머신 자동 생성  
+- 🌐 **VyOS 네트워크 자동화** — 인터페이스, 정적 라우팅, 방화벽 설정 자동 적용  
+- 🖥️ **서버 초기화 자동화** — 사용자 계정, SSH 키, 패키지 설치 등 시스템 초기 설정 수행  
+- 🔁 **멱등성(Idempotent) 구조** — 여러 번 실행해도 동일한 결과를 보장  
+- 🧱 **모듈화된 역할(Role) 구조** — 유지보수와 확장이 용이한 Ansible 역할 기반 설계  
+
+---
+
+## 🏗️ 아키텍처 (Architecture)
 
 ```mermaid
 flowchart TD
-    A[Ansible Controller] -->|Ansible Playbook| B[vSphere API]
+    A[Ansible Controller] -->|Playbook 실행| B[vSphere API]
     B --> C[VM Template (VyOS)]
     B --> D[VM Template (Server)]
-    C --> E[Configured VyOS Router]
-    D --> F[Configured Application Server]
-
-
-
-🚀 Quick Start
-1️⃣ Prerequisites
-VMware vSphere (vCenter)
-
-Ansible ≥ 2.15
-
-Python packages: pyvmomi, community.vmware
-
-SSH access to target systems
-
-2️⃣ Configuration
-Edit inventory/hosts.ini and update your vSphere credentials:
-
-ini
-코드 복사
-[vsphere]
-vcenter.example.com ansible_user=administrator@vsphere.local ansible_password=secret
-3️⃣ Run the playbook
-bash
-코드 복사
-ansible-playbook -i inventory/hosts.ini playbooks/site.yaml
-
-🖼️ Screenshots
-VM Deployment	VyOS Configuration
-
-⚡ Example Output
-bash
-코드 복사
-PLAY [Deploy VyOS and Server VMs on vSphere] **********************************
-
-TASK [Create VM from template] ************************************************
-changed: [vcenter.example.com -> localhost]
-
-TASK [Configure VyOS routing] *************************************************
-ok: [vyos-router]
-
-TASK [Setup server user accounts] *********************************************
-changed: [app-server]
-
-🧠 Tech Stack
-Category	Technology
-Automation	Ansible
-Virtualization	VMware vSphere
-Networking	VyOS
-Scripting	Python, YAML
-
-🛠️ Roadmap
- Support for vSphere Datastore Clusters
-
- Terraform integration
-
- Dynamic inventory generation
-
- Role for Windows Server provisioning
-
-🤝 Contributing
-Pull requests are welcome!
-For major changes, please open an issue first to discuss what you’d like to improve.
-
-
-## 이름들 작성 해주세요
-🧭 Author
-Kim Seongchan
-💼 Automation Engineer | ☁️ Infrastructure & Network Specialist
-📧 Contact: your.email@example.com
+    C --> E[구성 완료된 VyOS Router]
+    D --> F[구성 완료된 Linux Server]
