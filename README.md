@@ -37,7 +37,7 @@ flowchart TD
 
 
 
-🧠 기술 스택 (Tech Stack)
+## 🧠 기술 스택 (Tech Stack)
 구분	기술
 자동화	Ansible
 가상화	VMware vSphere
@@ -45,7 +45,7 @@ flowchart TD
 스크립트	Linux, YAML
 
 
-🛠️ 향후 계획 (Roadmap)
+##🛠️ 향후 계획 (Roadmap)
 
  vSphere 데이터스토어 클러스터 지원
 
