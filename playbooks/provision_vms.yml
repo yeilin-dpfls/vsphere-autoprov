@@ -1,0 +1,37 @@
+---
+- name: 1. Provision VyOS and Linux Server VMs on vSphere
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars_files:
+      - ../group_vars/all.yml
+  
+  tasks:
+    # ----------------------------------------------------------------------
+    # A. VyOS Router VM 생성 (NIC 2개 연결, 모두 DPG-manage)
+    # ----------------------------------------------------------------------
+    - name: Call vm_provisioning role for VyOS router
+      include_role:
+        name: vm_provisioning
+      vars:
+        vm_name: "{{ vyos_vm_name }}"
+        vm_template: "{{ vyos_template_name }}"
+        vm_datastore: "{{ vyos_datastore }}" 
+        vm_nics: 
+          - name: "{{ pg_external }}" # DPG-manage
+          - name: "{{ pg_internal }}" # DPG-manage
+
+
+    # ----------------------------------------------------------------------
+    # B. Linux Server VM 생성 (NIC 1개 연결, DPG-manage)
+    # ----------------------------------------------------------------------
+    - name: Call vm_provisioning role for Linux Server
+      include_role:
+        name: vm_provisioning
+      vars:
+        vm_name: "{{ linux_vm_name }}"
+        vm_template: "{{ linux_template_name }}"
+        vm_datastore: "{{ linux_datastore }}" 
+        vm_nics: 
+          - name: "{{ pg_internal }}" # DPG-manage

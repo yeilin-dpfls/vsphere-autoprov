@@ -1,9 +1,10 @@
 # VCSA 접속 정보 (VMware API 통신용)
 vcenter_hostname: 10.10.10.3
-vcenter_username: administrator@vsphere.local  # 실제 VCSA 관리 계정으로 변경 필요
+vcenter_username: administrator@vsphere.local
 vcenter_password: "VMware1!"         # 실제 VCSA 비밀번호로 변경 필요
 vcenter_datacenter: Datacenter00
 vcenter_cluster: Cluster-00            # 클러스터 이름으로 변경 필요
+vcenter_folder: /Datacenter00/vm
 
 # Datastore 할당 (VMware VM 생성 시 사용)
 vyos_datastore: datastore1
