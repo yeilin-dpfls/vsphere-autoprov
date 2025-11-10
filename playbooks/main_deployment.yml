@@ -4,27 +4,42 @@
   hosts: localhost
   connection: local
   gather_facts: no
-  # 모든 변수를 사용하기 위해 group_vars/all.yml 파일을 강제로 로드
   vars_files:
     - ../group_vars/all.yml 
   roles:
     - dvs_config     # [1순위] DVS 생성 및 DPG 생성 실행
 
 - name: 2. VM Provisioning Playbook (VM이 존재하면 건너뜀)
-  # 이전에 실행했던 VM 생성 Playbook을 호출
   import_playbook: provision_vms.yml
 
 - name: 3. Configure VyOS Router Network (VyOS 담당자 책임)
-  hosts: vyos_router # inventory의 [vyos_router] 그룹 대상 (10.10.10.18)
+  hosts: vyos_router
   gather_facts: no
   vars_files:
     - ../group_vars/all.yml 
   roles:
     - vyos_network   # [3순위] VyOS IP, NAT, 라우팅 설정 실행
 
-- name: 4. Prepare Linux Base OS (Nginx/Linux 담당자 책임)
-  hosts: linux_server # inventory의 [linux_server] 그룹 대상
+- name: 4. Configure Linux Base OS (COMMON STEPS: IP, Gateway, SSH)
+  hosts: linux_server,mail_server_vm
   gather_facts: no
-  # Linux 담당자가 작성할 Role을 위한 틀
+  vars_files:
+    - ../group_vars/all.yml 
   roles:
     - linux_os
+
+- name: 5. Deploy Nginx Application (Nginx 담당자 영역)
+  hosts: linux_server
+  gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml
+  roles:
+    - nginx_deployment
+
+- name: 6. Deploy Mail Server Application (Mail 담당자 영역)
+  hosts: mail_server_vm
+  gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml
+  roles:
+    - mail_server_deployment

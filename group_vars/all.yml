@@ -14,12 +14,22 @@ linux_datastore: datastore2
 vyos_template_name: vyos-template
 linux_template_name: ro9-vm-template
 
-# DVS Port Group 이름 (Playbook의 nics 변수에 사용)
-pg_external: DPG-manage                        # VyOS Outside NIC 연결용
-pg_internal: DPG-manage
+# DVS 이름 설정 
+dvs_name: DSwitch-AUTO
+
+# DVS Port Group 및 VLAN ID 설정
+pg_manage: DPG-manage
+pg_vyos_inside: DPG-vyos-inside
+pg_mail_server: DPG-mail-server
+pg_nginx_server: DPG-nginx-server  
+vlan_manage: 90
+vlan_vyos_inside: 10
+vlan_mail_server: 20 
+vlan_nginx_server: 30  
+
 
 # --- VyOS Router VM 설정 (VM Provisioning & Network Config Role 사용) ---
-vyos_vm_name: vyos
+vyos_vm_name: vyos-router
 vyos_os_user: vyos                              # VyOS VM에 설정된 SSH 접속 사용자
 vyos_ssh_pass: "vyos"         # VyOS VM SSH 비밀번호
 vyos_eth0_ip: 10.10.10.18/8                     # Outside NIC IP
@@ -27,11 +37,23 @@ vyos_eth1_ip: 172.16.1.100/16                   # Inside NIC IP
 vyos_default_gateway: 10.0.0.1                  # Default Route Next-Hop
 
 # ---linux VM 설정 (VM Provisioning & Nginx Role 사용) ---
-linux_vm_name: linux
-linux_os_user: root                  # Nginx VM에 설정된 SSH 접속 사용자
-linux_ssh_pass: "VMware1!"    # Nginx VM SSH 비밀번호
-linux_ip: 172.16.3.100/16                       # Nginx VM 최종 내부 IP
-linux_gateway: 172.16.1.100                     # VyOS Inside IP (Nginx VM의 게이트웨이)
+#linux_vm_name: linux
+#linux_os_user: root                  # Nginx VM에 설정된 SSH 접속 사용자
+#linux_ssh_pass: "VMware1!"    # Nginx VM SSH 비밀번호
+#linux_ip: 172.16.3.100/16                       # Nginx VM 최종 내부 IP
+#linux_gateway: 172.16.1.100                     # VyOS Inside IP (Nginx VM의 게이트웨이)
 
+# --- Mail Server 설정 ---
+mail_vm_name: mail-server-01
+mail_os_user: root
+mail_ssh_pass: "VMware1!"
+mail_ip: 172.16.2.100/16                         # VLAN 20
+mail_gateway: 172.16.1.100
 
+# --- Linux Server 설정 (Nginx용) ---
+linux_server_vm_name: nginx-server-01
+linux_os_user: root
+linux_ssh_pass: "VMware1!"
+linux_ip: 172.16.3.100/16                        # VLAN 30
+linux_gateway: 172.16.1.100
 
