@@ -63,3 +63,29 @@
     vlan_id: "{{ vlan_manage }}" # VLAN 90
     state: present
   delegate_to: localhost
+#
+#- name: 6. Attach ESXi Hosts to DVS and Map vmnics to Uplinks
+#  community.vmware.vmware_dvs_host:
+#    hostname: "{{ vcenter_hostname }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
+#    validate_certs: no
+#    switch_name: "{{ dvs_name }}"
+#    esxi_hostname: "{{ item }}"
+#    # VMkernel vmnic0(관리망)은 제외하고 나머지 NIC만 DVS에 매핑
+#    vmnics:
+#      - name: vmnic1
+#        uplink: Uplink 2
+#      - name: vmnic2
+#        uplink: Uplink 3
+#      - name: vmnic3
+#        uplink: Uplink 4
+#    state: present
+#  delegate_to: localhost
+#  loop:
+#    - 10.10.10.4
+#    - 10.10.10.5
+#  register: dvs_host_attach
+#  vars:
+#    ansible_user: root
+#    ansible_password: "{{ vcenter_password }}" # VCSA와 ESXi root 비밀번호가 동일하다고 가정
