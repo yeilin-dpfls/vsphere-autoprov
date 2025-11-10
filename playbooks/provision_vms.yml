@@ -30,7 +30,7 @@
       include_role:
         name: vm_provisioning
       vars:
-        vm_name: "{{ linux_vm_name }}"
+        vm_name: "{{ mail_server_vm_name }}"
         vm_template: "{{ linux_template_name }}"
         vm_datastore: "{{ linux_datastore }}"
         vm_nics:
@@ -44,8 +44,8 @@
       include_role:
         name: vm_provisioning
       vars:
-        vm_name: "{{ linux_vm_name }}"
+        vm_name: "{{ nginx_server_vm_name }}"
         vm_template: "{{ linux_template_name }}"
         vm_datastore: "{{ linux_datastore }}" 
         vm_nics: 
-    - name: "{{ pg_nginx_server }}" # NIC 1: (DPG-nginx_server, VLAN 30)
+          - name: "{{ pg_nginx_server }}" # NIC 1: (DPG-nginx_server, VLAN 30)
