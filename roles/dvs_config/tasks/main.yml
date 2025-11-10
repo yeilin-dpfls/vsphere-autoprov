@@ -12,14 +12,15 @@
     state: present
   delegate_to: localhost
 
-  - name: 2. Create DPG-vyos-inside (VLAN 10)
+- name: 2. Create DPG-vyos-inside (VLAN 10)
   community.vmware.vmware_dvs_portgroup:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ vcenter_datacenter }}"
-    switch_name: "{{ dvs_name }}"
+    portgroup_name: "{{ dvs_name }}"
+    port_binding: ephemeral
     name: "{{ pg_vyos_inside }}"
     vlan_id: "{{ vlan_vyos_inside }}" # VLAN 10
     vlan_type: VLAN
@@ -34,7 +35,8 @@
     validate_certs: no
     datacenter: "{{ vcenter_datacenter }}"
     switch_name: "{{ dvs_name }}"
-    name: "{{ pg_mail_server }}"
+    portgroup_name: "{{ pg_mail_server }}"
+    port_binding: ephemeral
     vlan_id: "{{ vlan_mail_server }}" # VLAN 20
     vlan_type: VLAN
     state: present
@@ -48,21 +50,23 @@
     validate_certs: no
     datacenter: "{{ vcenter_datacenter }}"
     switch_name: "{{ dvs_name }}"
-    name: "{{ pg_nginx_server }}"
+    portgroup_name: "{{ pg_nginx_server }}"
+    port_binding: ephemeral
     vlan_id: "{{ vlan_nginx_server }}" # VLAN 30
     vlan_type: VLAN
     state: present
   delegate_to: localhost
 
 - name: 5. Create DPG-manage (VLAN 90)
-  community.vmware.vcenter_dvs_portgroup:
+  community.vmware.vmware_dvs_portgroup:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ vcenter_datacenter }}"
     switch_name: "{{ dvs_name }}"
-    name: "{{ pg_manage }}"
+    portgroup_name: "{{ pg_manage }}"
+    port_binding: ephemeral
     vlan_id: "{{ vlan_manage }}" # VLAN 90
     vlan_type: VLAN
     state: present
