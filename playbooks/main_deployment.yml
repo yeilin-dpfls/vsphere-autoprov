@@ -18,15 +18,7 @@
   vars_files:
     - ../group_vars/all.yml 
   roles:
-    - vyos_network   # [3순위] VyOS IP, NAT, 라우팅 설정 실행
-
-      #- name: 4. Configure Linux Base OS (COMMON STEPS: IP, Gateway, SSH)
-      #  hosts: linux_server,mail_server_vm
-      #  gather_facts: no
-      #  vars_files:
-      #    - ../group_vars/all.yml 
-      #  roles:
-      #    - linux_os
+    - vyos_network
 
 - name: 4. Deploy Nginx Application (Nginx 담당자 영역)
   hosts: linux_server
