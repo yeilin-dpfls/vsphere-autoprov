@@ -1,52 +1,69 @@
 # tasks file for roles/dvs_config
 # /root/autoprov/vsphere-autoprov/roles/dvs_config/tasks/main.yml
-- name: 1. Create Distributed Switch (DSwitch-00)
+- name: 1. Create Distributed Switch (DSwitch-Auto)
   community.vmware.vmware_dvswitch:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ vcenter_datacenter }}"
-    switch_name: DSwitch-00             # DVS 이름
+    switch_name: "{{ dvs_name }}"             # DVS 이름
     uplink_quantity: 4          # 4개 업링크 포트 생성
     state: present
   delegate_to: localhost
 
-- name: 2. Create DPortGroup-manage
+  - name: 2. Create DPG-vyos-inside (VLAN 10)
   community.vmware.vmware_dvs_portgroup:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ vcenter_datacenter }}"
-    switch_name: DSwitch-00
-    name: DPG-manage             # 관리망 포트 그룹 생성
-    vlan_type: none              # VLAN ID를 사용하지 않음 (Access Port)
+    switch_name: "{{ dvs_name }}"
+    name: "{{ pg_vyos_inside }}"
+    vlan_id: "{{ vlan_vyos_inside }}" # VLAN 10
+    vlan_type: VLAN
     state: present
   delegate_to: localhost
 
-- name: 3. Create DPortGroup-external
+- name: 3. Create DPG-mail-server (VLAN 20)
   community.vmware.vmware_dvs_portgroup:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ vcenter_datacenter }}"
-    switch_name: DSwitch-00
-    name: DPG-external           # VyOS Outside NIC 연결용 포트 그룹
-    vlan_type: none
+    switch_name: "{{ dvs_name }}"
+    name: "{{ pg_mail_server }}"
+    vlan_id: "{{ vlan_mail_server }}" # VLAN 20
+    vlan_type: VLAN
     state: present
   delegate_to: localhost
 
-- name: 4. Create DPortGroup-internal
+- name: 4. Create DPG-nginx-server (VLAN 30)
   community.vmware.vmware_dvs_portgroup:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ vcenter_datacenter }}"
-    switch_name: DSwitch-00
-    name: DPG-internal           # VyOS/Linux Inside NIC 연결용 포트 그룹
-    vlan_type: none
+    switch_name: "{{ dvs_name }}"
+    name: "{{ pg_nginx_server }}"
+    vlan_id: "{{ vlan_nginx_server }}" # VLAN 30
+    vlan_type: VLAN
+    state: present
+  delegate_to: localhost
+
+- name: 5. Create DPG-manage (VLAN 90)
+  community.vmware.vcenter_dvs_portgroup:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ vcenter_datacenter }}"
+    switch_name: "{{ dvs_name }}"
+    name: "{{ pg_manage }}"
+    vlan_id: "{{ vlan_manage }}" # VLAN 90
+    vlan_type: VLAN
     state: present
   delegate_to: localhost
