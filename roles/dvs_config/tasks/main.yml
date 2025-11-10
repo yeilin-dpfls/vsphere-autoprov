@@ -18,12 +18,10 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-    datacenter: "{{ vcenter_datacenter }}"
-    portgroup_name: "{{ dvs_name }}"
+    switch_name: "{{ dvs_name }}"
+    portgroup_name: "{{ pg_vyos_inside }}"
     port_binding: ephemeral
-    name: "{{ pg_vyos_inside }}"
     vlan_id: "{{ vlan_vyos_inside }}" # VLAN 10
-    vlan_type: VLAN
     state: present
   delegate_to: localhost
 
@@ -33,12 +31,10 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-    datacenter: "{{ vcenter_datacenter }}"
     switch_name: "{{ dvs_name }}"
     portgroup_name: "{{ pg_mail_server }}"
     port_binding: ephemeral
     vlan_id: "{{ vlan_mail_server }}" # VLAN 20
-    vlan_type: VLAN
     state: present
   delegate_to: localhost
 
@@ -48,12 +44,10 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-    datacenter: "{{ vcenter_datacenter }}"
     switch_name: "{{ dvs_name }}"
     portgroup_name: "{{ pg_nginx_server }}"
     port_binding: ephemeral
     vlan_id: "{{ vlan_nginx_server }}" # VLAN 30
-    vlan_type: VLAN
     state: present
   delegate_to: localhost
 
@@ -63,11 +57,9 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-    datacenter: "{{ vcenter_datacenter }}"
     switch_name: "{{ dvs_name }}"
     portgroup_name: "{{ pg_manage }}"
     port_binding: ephemeral
     vlan_id: "{{ vlan_manage }}" # VLAN 90
-    vlan_type: VLAN
     state: present
   delegate_to: localhost

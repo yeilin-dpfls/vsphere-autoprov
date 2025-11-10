@@ -9,7 +9,7 @@
   
   tasks:
     # ----------------------------------------------------------------------
-    # A. VyOS Router VM 생성 (NIC 2개 연결, 모두 DPG-manage)
+    # A. VyOS Router VM 생성 (NIC 2개 연결)
     # ----------------------------------------------------------------------
     - name: Call vm_provisioning role for VyOS router
       include_role:
@@ -19,14 +19,28 @@
         vm_template: "{{ vyos_template_name }}"
         vm_datastore: "{{ vyos_datastore }}" 
         vm_nics: 
-          - name: "{{ pg_external }}" # DPG-manage
-          - name: "{{ pg_internal }}" # DPG-manage
+          #NIC 1 (Outside): Standard Switch의 Port Group에 연결
+          - name: "{{ standard_pg_outside }}" 
+          - name: "{{ pg_vyos_inside }}" # DVS Port inside ,VLAN 10 
+
+    # ----------------------------------------------------------------------
+    # B. Mail Server VM 생성 (NIC 1개 연결,DPG-mail-server)
+    # ----------------------------------------------------------------------
+    - name: Call vm_provisioning role for Mail Server
+      include_role:
+        name: vm_provisioning
+      vars:
+        vm_name: "{{ linux_vm_name }}"
+        vm_template: "{{ linux_template_name }}"
+        vm_datastore: "{{ linux_datastore }}"
+        vm_nics:
+          - name: "{{ pg_mail_server }}"   # NIC 1: (DPG-mail-server, VLAN 20)
 
 
     # ----------------------------------------------------------------------
-    # B. Linux Server VM 생성 (NIC 1개 연결, DPG-manage)
+    # C. Nginx Server VM 생성 (NIC 1개 연결, DPG-nginx-sever)
     # ----------------------------------------------------------------------
-    - name: Call vm_provisioning role for Linux Server
+    - name: Call vm_provisioning role for Nginx Server
       include_role:
         name: vm_provisioning
       vars:
@@ -34,4 +48,4 @@
         vm_template: "{{ linux_template_name }}"
         vm_datastore: "{{ linux_datastore }}" 
         vm_nics: 
-          - name: "{{ pg_internal }}" # DPG-manage
+    - name: "{{ pg_nginx_server }}" # NIC 1: (DPG-nginx_server, VLAN 30)

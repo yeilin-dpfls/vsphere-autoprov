@@ -17,6 +17,9 @@ linux_template_name: ro9-vm-template
 # DVS 이름 설정 
 dvs_name: DSwitch-AUTO
 
+# Standard Switch Port Group (Vyos Outside NIC 연결용)
+standard_pg_outside: VM Network
+
 # DVS Port Group 및 VLAN ID 설정
 pg_manage: DPG-manage
 pg_vyos_inside: DPG-vyos-inside
