@@ -20,6 +20,7 @@
     validate_certs: no
     switch_name: "{{ dvs_name }}"
     portgroup_name: "{{ pg_vyos_inside }}"
+    num_ports: 120
     port_binding: ephemeral
     vlan_id: "{{ vlan_vyos_inside }}" # VLAN 10
     state: present
@@ -33,6 +34,7 @@
     validate_certs: no
     switch_name: "{{ dvs_name }}"
     portgroup_name: "{{ pg_mail_server }}"
+    num_ports: 120
     port_binding: ephemeral
     vlan_id: "{{ vlan_mail_server }}" # VLAN 20
     state: present
@@ -46,6 +48,7 @@
     validate_certs: no
     switch_name: "{{ dvs_name }}"
     portgroup_name: "{{ pg_nginx_server }}"
+    num_ports: 120
     port_binding: ephemeral
     vlan_id: "{{ vlan_nginx_server }}" # VLAN 30
     state: present
@@ -59,6 +62,7 @@
     validate_certs: no
     switch_name: "{{ dvs_name }}"
     portgroup_name: "{{ pg_manage }}"
+    num_ports: 120
     port_binding: ephemeral
     vlan_id: "{{ vlan_manage }}" # VLAN 90
     state: present
@@ -79,4 +83,39 @@
   loop:
     - 10.10.10.4
     - 10.10.10.5
+# 7. 잠시 대기 (호스트 등록 완료)
+- name: 7. Wait for host registration
+  pause:
+    seconds: 10
+    prompt: "호스트가 DVS에 등록되었습니다. 10초 대기 중..."
+
+# 8. Add vmnic2/3 to DVS uplinks
+- name: 8. Add vmnic2/3 to DVS uplinks (vmnic 추가)
+  throttle: 1
+  community.vmware.vmware_dvs_host:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    switch_name: "{{ dvs_name }}"
+    esxi_hostname: "{{ item }}"
+    vmnics:
+      - vmnic2
+      - vmnic3
+    state: present
+  delegate_to: localhost
+  loop:
+    - 10.10.10.4
+    - 10.10.10.5
+
+# 9. 완료 메시지
+- name: 9. DVS Configuration Complete
+  debug:
+    msg: |
+      ✓ DVS 설정 완료!
+      ✓ DVS 이름: {{ dvs_name }}
+      ✓ 포트그룹 4개 생성
+      ✓ 호스트 2개 추가
+      ✓ vmnic2/3 uplink 연결 완료
+
 
