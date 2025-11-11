@@ -60,3 +60,10 @@ nginx_ssh_pass: "VMware1!"
 nginx_ip: 172.16.3.100/16                        # VLAN 30
 nginx_gateway: 172.16.1.100
 
+# --- VyOS Inside NIC 및 VLAN 게이트웨이 설정 ---
+vyos_eth1_ip: 172.16.1.100/16                    # VyOS Inside - NIC 자체 IP (VLAN 10 트래픽)
+
+# [⭐ 새로 추가] VLAN별 서브 인터페이스 게이트웨이 IP
+vyos_gw_vlan10: 172.16.1.1/16                    # eth1.10 (VyOS NIC 10번 서브 인터페이스)
+vyos_gw_vlan20: 172.16.2.1/16                    # eth1.20 (Mail Server GW)
+vyos_gw_vlan30: 172.16.3.1/16                    # eth1.30 (Nginx Server GW)

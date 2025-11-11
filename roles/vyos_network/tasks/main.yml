@@ -1,2 +1,41 @@
+# /root/autoprov/vsphere-autoprov/roles/vyos_network/tasks/main.yml
 ---
-# tasks file for roles/vyos_network
+- name: 1. Ensure VyOS is available via SSH
+  ansible.builtin.wait_for_connection:
+    timeout: 300
+
+# ----------------------------------------------------------------------
+# 2. VyOS VLAN 기반 네트워크 설정 (서브 인터페이스)
+# ----------------------------------------------------------------------
+- name: 2. Configure VyOS for VLAN Trunking and Sub-interfaces
+  vyos.vyos.vyos_config:
+    commands:
+      # eth0 (Outside/Standard Switch) 설정
+      - set interfaces ethernet eth0 address {{ vyos_eth0_ip }}
+      
+      # eth1 (Inside NIC)를 트렁크 베이스로 설정
+      # VLAN 10 (VyOS Inside) 서브 인터페이스 설정 (172.16.1.0/16 대역 GW)
+      - set interfaces ethernet eth1 vif 10 address {{ vyos_gw_vlan10 }} 
+      # VLAN 20 (Mail Server) 서브 인터페이스 설정 (172.16.2.0/16 대역 GW)
+      - set interfaces ethernet eth1 vif 20 address {{ vyos_gw_vlan20 }} 
+      # VLAN 30 (Nginx Server) 서브 인터페이스 설정 (172.16.3.0/16 대역 GW)
+      - set interfaces ethernet eth1 vif 30 address {{ vyos_gw_vlan30 }}
+
+# ----------------------------------------------------------------------
+# 3. 라우팅 및 NAT 설정
+# ----------------------------------------------------------------------
+- name: 3. Set Default Route and Source NAT
+  vyos.vyos.vyos_config:
+    commands:
+      # Default Route 설정
+      - set protocols static route 0.0.0.0/0 next-hop {{ vyos_default_gateway }}
+      # Source NAT (내부 모든 172.16.x.x 트래픽을 eth0 IP로 변환)
+      - set nat source rule 1 outbound-interface eth0
+      - set nat source rule 1 source address 172.16.0.0/16
+      - set nat source rule 1 translation address masquerade
+
+- name: 4. Commit and Save configuration
+  vyos.vyos.vyos_command:
+    commands:
+      - commit
+      - save
