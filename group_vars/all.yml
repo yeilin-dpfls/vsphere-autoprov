@@ -26,7 +26,7 @@ pg_vyos_inside: DPG-vyos-inside
 pg_mail_server: DPG-mail-server
 pg_nginx_server: DPG-nginx-server  
 vlan_manage: 90
-vlan_vyos_inside: 10
+vlan_vyos_inside: 4094
 vlan_mail_server: 20 
 vlan_nginx_server: 30  
 
@@ -35,9 +35,10 @@ vlan_nginx_server: 30
 vyos_vm_name: vyos-router
 vyos_os_user: vyos                              # VyOS VM에 설정된 SSH 접속 사용자
 vyos_ssh_pass: "vyos"         # VyOS VM SSH 비밀번호
-vyos_eth0_ip: 10.10.10.18/8                     # Outside NIC IP
+vyos_eth2_ip: 10.10.10.18/8                     # Outside NIC IP
 vyos_eth1_ip: 172.16.1.100/16                   # Inside NIC IP
 vyos_default_gateway: 10.0.0.1                  # Default Route Next-Hop
+vyos_ssh_port: 22
 
 # ---linux VM 설정 (VM Provisioning & Nginx Role 사용) ---
 #linux_vm_name: linux
@@ -50,20 +51,18 @@ vyos_default_gateway: 10.0.0.1                  # Default Route Next-Hop
 mail_server_vm_name: mail-server-01
 mail_os_user: root
 mail_ssh_pass: "VMware1!"
-mail_ip: 172.16.2.100/16                         # VLAN 20
+mail_ip: 172.16.2.100/24                         # VLAN 20
 mail_gateway: 172.16.1.100
 
 # --- Linux Server 설정 (Nginx용) ---
 nginx_server_vm_name: nginx-server-01
 nginx_os_user: root
 nginx_ssh_pass: "VMware1!"
-nginx_ip: 172.16.3.100/16                        # VLAN 30
+nginx_ip: 172.16.3.100/24                        # VLAN 30
 nginx_gateway: 172.16.1.100
 
-# --- VyOS Inside NIC 및 VLAN 게이트웨이 설정 ---
-vyos_eth1_ip: 172.16.1.100/16                    # VyOS Inside - NIC 자체 IP (VLAN 10 트래픽)
-
 # [⭐ 새로 추가] VLAN별 서브 인터페이스 게이트웨이 IP
-vyos_gw_vlan10: 172.16.1.1/16                    # eth1.10 (VyOS NIC 10번 서브 인터페이스)
-vyos_gw_vlan20: 172.16.2.1/16                    # eth1.20 (Mail Server GW)
-vyos_gw_vlan30: 172.16.3.1/16                    # eth1.30 (Nginx Server GW)
+vyos_gw_vlan4094: 172.16.1.1/24                    # eth1.10 (VyOS NIC 10번 서브 인터페이스)
+vyos_gw_vlan20: 172.16.2.1/24                    # eth1.20 (Mail Server GW)
+vyos_gw_vlan30: 172.16.3.1/24                    # eth1.30 (Nginx Server GW)
+vyos_gw_vlan90: 172.16.9.1/24                    # eth1.90 (manage)

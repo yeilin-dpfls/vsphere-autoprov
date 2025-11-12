@@ -12,7 +12,7 @@
 - name: 2. VM Provisioning Playbook (VM이 존재하면 건너뜀)
   import_playbook: provision_vms.yml
 
-- name: 3. Configure VyOS Router Network (VyOS 담당자 책임)
+- name: 3. Configure VyOS Router Network 
   hosts: vyos_router
   gather_facts: no
   vars_files:
@@ -20,7 +20,7 @@
   roles:
     - vyos_network
 
-- name: 4. Deploy Nginx Application (Nginx 담당자 영역)
+- name: 4. Deploy Nginx Application 
   hosts: linux_server
   gather_facts: no
   vars_files:

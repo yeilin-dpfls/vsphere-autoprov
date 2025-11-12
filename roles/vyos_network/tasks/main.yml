@@ -1,41 +1,68 @@
 # /root/autoprov/vsphere-autoprov/roles/vyos_network/tasks/main.yml
 ---
-- name: 1. Ensure VyOS is available via SSH
-  ansible.builtin.wait_for_connection:
-    timeout: 300
-
-# ----------------------------------------------------------------------
-# 2. VyOS VLAN 기반 네트워크 설정 (서브 인터페이스)
-# ----------------------------------------------------------------------
-- name: 2. Configure VyOS for VLAN Trunking and Sub-interfaces
-  vyos.vyos.vyos_config:
-    commands:
-      # eth0 (Outside/Standard Switch) 설정
-      - set interfaces ethernet eth0 address {{ vyos_eth0_ip }}
+- name: 1. Configure VyOS Network, Routing, and NAT (DHCP-based)
+  community.vmware.vmware_vm_shell:
+      # VCSA 접속 정보
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: 'false'
+      datacenter: '{{ vcenter_datacenter }}'
+      folder: "{{ vcenter_folder }}" 
+      vm_id: '{{ vyos_vm_name }}'      
+      vm_id_type: vm_name
       
-      # eth1 (Inside NIC)를 트렁크 베이스로 설정
-      # VLAN 10 (VyOS Inside) 서브 인터페이스 설정 (172.16.1.0/16 대역 GW)
-      - set interfaces ethernet eth1 vif 10 address {{ vyos_gw_vlan10 }} 
-      # VLAN 20 (Mail Server) 서브 인터페이스 설정 (172.16.2.0/16 대역 GW)
-      - set interfaces ethernet eth1 vif 20 address {{ vyos_gw_vlan20 }} 
-      # VLAN 30 (Nginx Server) 서브 인터페이스 설정 (172.16.3.0/16 대역 GW)
-      - set interfaces ethernet eth1 vif 30 address {{ vyos_gw_vlan30 }}
+      # VyOS 초기 접근 정보
+      vm_username: '{{ vyos_os_user }}' 
+      vm_password: '{{ vyos_ssh_pass }}' 
+      
+      # 실행 쉘
+      vm_shell: /bin/vbash
+      
+      # VyOS 설정 명령 주입
+      vm_shell_args: |-
+        -c "source /opt/vyatta/etc/functions/script-template
+        configure
+        
+        # 1. 관리자 계정 비밀번호 및 SSH 설정 (향후 Playbook을 위한 필수 설정)
+        set service ssh port {{ vyos_ssh_port }}
+        
+        # 2. Outside NIC 설정 (eth2: Control Node 통신용)
+        set interfaces ethernet eth2 address dhcp
+        set interfaces ethernet eth2 description 'Outside (DHCP)'
+        
+        # 3. Inside NIC 설정 (eth1: DVS 트렁크, VLAN 기반 서브 인터페이스)
+        set interfaces ethernet eth1 description 'Inside Trunk'
+        set interfaces ethernet eth1 vif {{ vlan_vyos_inside }} address {{ vyos_gw_vlan4094 }}
+        set interfaces ethernet eth1 vif {{ vlan_vyos_inside }} description 'VLAN_4904_Base'
+        
+        # VLAN 90 (Manage) 서브 인터페이스 설정
+        set interfaces ethernet eth1 vif {{ vlan_manage }} address {{ vyos_gw_vlan90 }}
+        set interfaces ethernet eth1 vif {{ vlan_manage }} description 'VLAN_90_Manage' 
+        
+        # VLAN 20 (Mail Server) 서브 인터페이스 설정
+        set interfaces ethernet eth1 vif {{ vlan_mail_server }} address {{ vyos_gw_vlan20 }} 
+        set interfaces ethernet eth1 vif {{ vlan_mail_server }} description 'VLAN_20_Mail_GW'
+        
+        # VLAN 30 (Nginx Server) 서브 인터페이스 설정
+        set interfaces ethernet eth1 vif {{ vlan_nginx_server }} address {{ vyos_gw_vlan30 }}
+        set interfaces ethernet eth1 vif {{ vlan_nginx_server }} description 'VLAN_30_Nginx_GW'
+        
+        # 4. 라우팅 및 NAT 설정
+        set protocols static route 0.0.0.0/0 next-hop {{ vyos_default_gateway }}
+        set nat source rule 1 outbound-interface eth2
+        set nat source rule 1 source address 172.16.0.0/16
+        set nat source rule 1 translation address masquerade
+        
+        # 5. DNS 및 NTP 설정
+        set system name-server 8.8.8.8
+        set system ntp server kr.pool.ntp.org
 
-# ----------------------------------------------------------------------
-# 3. 라우팅 및 NAT 설정
-# ----------------------------------------------------------------------
-- name: 3. Set Default Route and Source NAT
-  vyos.vyos.vyos_config:
-    commands:
-      # Default Route 설정
-      - set protocols static route 0.0.0.0/0 next-hop {{ vyos_default_gateway }}
-      # Source NAT (내부 모든 172.16.x.x 트래픽을 eth0 IP로 변환)
-      - set nat source rule 1 outbound-interface eth0
-      - set nat source rule 1 source address 172.16.0.0/16
-      - set nat source rule 1 translation address masquerade
+        commit
+        save"
+      wait_for_process: True
+      timeout: 240
 
-- name: 4. Commit and Save configuration
-  vyos.vyos.vyos_command:
-    commands:
-      - commit
-      - save
+  delegate_to: localhost
+  register: vyos_shell_config
+

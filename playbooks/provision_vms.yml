@@ -19,9 +19,10 @@
         vm_template: "{{ vyos_template_name }}"
         vm_datastore: "{{ vyos_datastore }}" 
         vm_nics: 
-          #NIC 1 (Outside): Standard Switch의 Port Group에 연결
+            #NIC 2 (Vyos OS : Network adapter 1): Standard Switch의 Port Group에 연결(Outside)
           - name: "{{ standard_pg_outside }}" 
-          - name: "{{ pg_vyos_inside }}" # DVS Port inside ,VLAN 10 
+            #NIC 1 (Vyos OS : Network adapter 2): 
+          - name: "{{ pg_vyos_inside }}" 
 
     # ----------------------------------------------------------------------
     # B. Mail Server VM 생성 (NIC 1개 연결,DPG-mail-server)
@@ -50,63 +51,3 @@
         vm_nics: 
           - name: "{{ pg_nginx_server }}" # NIC 1: (DPG-nginx_server, VLAN 30)
 
-# [⭐ 추가] NIC 연결 상태 확인 및 강제 마이그레이션 Play
-# ----------------------------------------------------------------------
-- name: 2. Force NIC Connection to Distributed Port Groups
-  hosts: localhost
-  connection: local
-  gather_facts: no
-  vars_files:
-    - ../group_vars/all.yml
-  
-  tasks:
-    # A. VyOS NIC 마이그레이션
-    - name: Migrate VyOS Outside NIC (eth0) to Standard PG
-      community.vmware.vmware_guest_network:
-        name: "{{ vyos_vm_name }}"
-        hostname: "{{ vcenter_hostname }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: no
-        label: "Network adapter 1" # VyOS Outside NIC
-        network_name: "{{ standard_pg_outside }}" # Standard Switch PG 이름 (예: VM Network)
-        state: present
-      delegate_to: localhost
-
-    - name: Migrate VyOS Inside NIC (eth1) to DVS DPG
-      community.vmware.vmware_guest_network:
-        name: "{{ vyos_vm_name }}"
-        hostname: "{{ vcenter_hostname }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: no
-        label: "Network adapter 2" # VyOS Inside NIC
-        network_name: "{{ pg_vyos_inside }}" # DVS DPG 이름
-        state: present
-      delegate_to: localhost
-      
-    # B. Mail Server NIC 마이그레이션 (Mail)
-    - name: Migrate Mail Server NIC to DVS DPG (Mail Server)
-      community.vmware.vmware_guest_network:
-        name: "{{ mail_server_vm_name }}"
-        hostname: "{{ vcenter_hostname }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: no
-        label: "Network adapter 1"
-        network_name: "{{ pg_mail_server }}"
-        state: present
-      delegate_to: localhost
-      
-    # C. Nginx Server NIC 마이그레이션
-    - name: Migrate Nginx Server NIC to DVS DPG (Nginx Server)
-      community.vmware.vmware_guest_network:
-        name: "{{ nginx_server_vm_name }}"
-        hostname: "{{ vcenter_hostname }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: no
-        label: "Network adapter 1"
-        network_name: "{{ pg_nginx_server }}"
-        state: present
-      delegate_to: localhost
