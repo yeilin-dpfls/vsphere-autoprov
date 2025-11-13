@@ -6,7 +6,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-i    datacenter: "{{ vcenter_datacenter }}"
+    datacenter: "{{ vcenter_datacenter }}"
     switch_name: "{{ dvs_name }}"             # DVS 이름
     uplink_quantity: 4          # 4개 업링크 포트 생성
     state: present
@@ -22,7 +22,8 @@ i    datacenter: "{{ vcenter_datacenter }}"
     portgroup_name: "{{ pg_vyos_inside }}"
     num_ports: 120
     port_binding: ephemeral
-    vlan_id: 4095 #"{{ vlan_vyos_inside }}" # VLAN 10
+    vlan_id: "0-4094" #"{{ vlan_vyos_inside }}" # VLAN 10
+    vlan_trunk: true
     state: present
   delegate_to: localhost
 

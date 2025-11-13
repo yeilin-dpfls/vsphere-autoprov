@@ -28,33 +28,33 @@
         set service ssh port {{ vyos_ssh_port }}
         
         # 2. Outside NIC 설정 (eth2: Control Node 통신용)
-        set interfaces ethernet eth2 address dhcp
-        set interfaces ethernet eth2 description 'Outside (DHCP)'
+        set interfaces ethernet eth1 address dhcp
+        set interfaces ethernet eth1 description 'Outside (DHCP)'
         
         # 3. Inside NIC 설정 (eth1: DVS 트렁크, VLAN 기반 서브 인터페이스)
-        set interfaces ethernet eth1 description 'Inside Trunk'
-        set interfaces ethernet eth1 vif {{ vlan_vyos_inside }} address {{ vyos_gw_vlan4094 }}
-        set interfaces ethernet eth1 vif {{ vlan_vyos_inside }} description 'VLAN_4904_Base'
+        set interfaces ethernet eth2 description 'Inside Trunk'
+        set interfaces ethernet eth2 vif 4094 address {{ vyos_gw_vlan4094 }}
+        set interfaces ethernet eth2 vif 4094 description 'VLAN_4904_Base'
         
         # VLAN 90 (Manage) 서브 인터페이스 설정
-        set interfaces ethernet eth1 vif {{ vlan_manage }} address {{ vyos_gw_vlan90 }}
-        set interfaces ethernet eth1 vif {{ vlan_manage }} description 'VLAN_90_Manage' 
+        set interfaces ethernet eth2 vif {{ vlan_manage }} address {{ vyos_gw_vlan90 }}
+        set interfaces ethernet eth2 vif {{ vlan_manage }} description 'VLAN_90_Manage' 
         
         # VLAN 20 (Mail Server) 서브 인터페이스 설정
-        set interfaces ethernet eth1 vif {{ vlan_mail_server }} address {{ vyos_gw_vlan20 }} 
-        set interfaces ethernet eth1 vif {{ vlan_mail_server }} description 'VLAN_20_Mail_GW'
+        set interfaces ethernet eth2 vif {{ vlan_mail_server }} address {{ vyos_gw_vlan20 }} 
+        set interfaces ethernet eth2 vif {{ vlan_mail_server }} description 'VLAN_20_Mail_GW'
         
         # VLAN 30 (Nginx Server) 서브 인터페이스 설정
-        set interfaces ethernet eth1 vif {{ vlan_nginx_server }} address {{ vyos_gw_vlan30 }}
-        set interfaces ethernet eth1 vif {{ vlan_nginx_server }} description 'VLAN_30_Nginx_GW'
+        set interfaces ethernet eth2 vif {{ vlan_nginx_server }} address {{ vyos_gw_vlan30 }}
+        set interfaces ethernet eth2 vif {{ vlan_nginx_server }} description 'VLAN_30_Nginx_GW'
         
         # 4. 라우팅 및 NAT 설정
         set protocols static route 0.0.0.0/0 next-hop {{ vyos_default_gateway }}
-        set nat source rule 100 outbound-interface eth2
+        set nat source rule 100 outbound-interface eth1
         set nat source rule 100 source address 172.16.3.0/24
         set nat source rule 100 translation address masquerade
 
-        set nat source rule 200 outbound-interface eth2
+        set nat source rule 200 outbound-interface eth1
         set nat source rule 200 source address 172.16.2.0/24
         set nat source rule 200 translation address masquerade
         
