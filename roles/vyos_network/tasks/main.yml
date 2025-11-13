@@ -1,5 +1,11 @@
 # /root/autoprov/vsphere-autoprov/roles/vyos_network/tasks/main.yml
 ---
+- name: 🚨 Wait for Guest Operations Agent to initialize
+  ansible.builtin.pause:
+    seconds: 60  # ⭐ 30 → 60으로 변경
+    prompt: "Waiting for Guest Operations readiness..."
+  delegate_to: localhost
+
 - name: 1. Configure VyOS Network, Routing, and NAT (DHCP-based)
   community.vmware.vmware_vm_shell:
       # VCSA 접속 정보
