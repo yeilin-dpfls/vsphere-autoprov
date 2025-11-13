@@ -12,7 +12,9 @@ linux_datastore: datastore2
 
 # VM 템플릿 이름 
 vyos_template_name: vyos-template
-linux_template_name: ro9-vm-template
+mail_server_template_name: mail-server-template
+nginx_server_template_name: nginx-server-template
+
 
 # DVS 이름 설정 
 dvs_name: DSwitch-AUTO
