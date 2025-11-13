@@ -1,0 +1,28 @@
+---
+# roles/nginx_deployment/tasks/install.yml
+
+- name: Ensure EPEL repository is present (RHEL family)
+  ansible.builtin.yum:
+    name: epel-release
+    state: present
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Install Nginx package on RHEL-family
+  ansible.builtin.yum:
+    name: "{{ nginx_package_name }}"
+    state: latest
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Install Nginx package on Debian-family
+  ansible.builtin.apt:
+    name: "{{ nginx_package_name }}"
+    state: latest
+    update_cache: yes
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Ensure Nginx service is enabled and started
+  ansible.builtin.systemd:
+    name: "{{ nginx_service_name }}"
+    enabled: true
+    state: started
+

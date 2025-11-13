@@ -1,2 +1,8 @@
+# 7️⃣ roles/nginx_deployment/handlers/main.yml
 ---
-# handlers file for roles/nginx_deployment
+- name: Restart Nginx service
+  ansible.builtin.systemd:
+    name: "{{ nginx_service_name }}" 
+    state: reloaded # 서비스 리로드 (설정 파일 변경 시 권장)
+  # tasks/configure.yml의 notify 이름과 정확히 일치해야 합니다.
+  listen: Restart Nginx service

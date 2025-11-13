@@ -1,0 +1,8 @@
+---
+# roles/nginx_deployment/tasks/main.yml
+
+- name: Install and start Nginx service on the VM
+  import_tasks: install.yml # Nginx 설치 및 시작
+
+- name: Deploy Nginx configuration file and prepare webroot
+  import_tasks: configure.yml # 설정 파일 배포 및 웹 루트 생성 (핸들러 호출)

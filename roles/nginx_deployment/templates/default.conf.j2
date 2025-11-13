@@ -1,0 +1,13 @@
+# roles/nginx_deployment/templates/default.conf.j2
+server {
+    listen {{ nginx_listen_port }};
+    server_name {{ nginx_server_name }};
+
+    root {{ nginx_root_path }};
+    index {{ nginx_index_file }};
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+

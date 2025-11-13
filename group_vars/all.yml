@@ -59,9 +59,9 @@ mail_gateway: 172.16.1.100
 # --- Linux Server 설정 (Nginx용) ---
 nginx_server_vm_name: nginx-server-01
 nginx_os_user: root
-nginx_ssh_pass: "VMware1!"
+nginx_ssh_pass: "P@ssw0rd"
 nginx_ip: 172.16.3.100/24                        # VLAN 30
-nginx_gateway: 172.16.1.100
+nginx_gateway: 172.16.3.1
 
 # [⭐ 새로 추가] VLAN별 서브 인터페이스 게이트웨이 IP
 vyos_gw_vlan4094: 172.16.1.1/24                    # eth1.10 (VyOS NIC 10번 서브 인터페이스)

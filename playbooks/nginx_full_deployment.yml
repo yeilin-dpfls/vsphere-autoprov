@@ -1,0 +1,62 @@
+---
+# Play 1: 1차 IP (10.10.10.253)로 접속하여 IP 변경 Role 호출
+- name: 1. NGINX VM 초기 접속 및 IP 변경 (10.10.10.253 -> 172.16.3.100)
+  hosts: nginx_servers # hosts.ini의 초기 IP (10.10.10.253)로 접속
+  gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml
+  
+  tasks:
+    # 2단계에서 생성한 ip_config.yml을 호출
+    - ansible.builtin.include_tasks:
+        file: ../roles/linux_os/tasks/ip_config.yml
+      tags: ip_change
+
+# Play 2: Control Node에서 인벤토리 업데이트 후, 최종 Role 호출
+- name: 2. 인벤토리 업데이트 및 Nginx 배포 (172.16.3.100으로 접속)
+  hosts: localhost # Control Node에서 실행
+  gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml
+    
+  tasks:
+    - name: 2.1 Final IP 변수 설정
+      ansible.builtin.set_fact:
+        final_ip: "{{ nginx_ip | split('/') | first }}"
+
+    - name: 2.2 Ansible 메모리 인벤토리 업데이트 (핵심)
+      add_host:
+        name: nginx_server
+        groups: nginx_servers
+        # '172.16.3.100' 부분만 추출하여 새로운 접속 IP로 설정
+        ansible_host: "{{ final_ip }}" 
+        ansible_user: "{{ nginx_os_user }}"
+        ansible_password: "{{ nginx_ssh_pass }}"
+        # 중요한 연결 설정도 함께 주입
+        ansible_connection: ssh
+      run_once: true
+
+    - name: 2.3 새 IP ({{ final_ip }})로 접속될 때까지 대기 및 접속 확인
+      ansible.builtin.wait_for_connection:
+        timeout: 300 
+      delegate_to: "{{ final_ip }}" # 새 IP로 접속 테스트
+      vars:
+        ansible_host: "{{ final_ip }}"
+        ansible_user: "{{ nginx_os_user }}"
+        ansible_ssh_pass: "{{ nginx_ssh_pass }}"
+     # ⭐ 2.4 Nginx 배포 Role 실행 태스크는 제거됨. Play 3이 대신 수행.
+    # 이전 오류 코드:
+    # - name: 2.4 Nginx 배포 Role 실행 (이제 172.16.3.100으로 접속됨)
+    #   ansible.builtin.include_role:
+    #     name: nginx_deployment
+    #   delegate_to: nginx_server  <-- 이 부분이 오류 발생.
+
+# ⭐ Play 3: 업데이트된 172.16.3.100으로 접속하여 Nginx 배포
+- name: 3. Nginx 배포 Role 실행 (172.16.3.100으로 접속)
+  hosts: nginx_servers # Play 2에서 업데이트된 새 IP로 접속
+  gather_facts: yes
+  vars_files:
+    - ../group_vars/all.yml
+    
+  roles:
+    - nginx_deployment # Nginx Role 실행  
