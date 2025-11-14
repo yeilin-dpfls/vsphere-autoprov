@@ -142,10 +142,6 @@
       command: nmcli connection modify "{{ ansible_default_ipv4.interface }}" ipv4.gateway 10.10.53.1
       become: yes
 
-    - name: Restart network connection to apply gateway change
-      command: nmcli connection down "{{ ansible_default_ipv4.interface }}" && nmcli connection up "{{ ansible_default_ipv4.interface }}"
-      become: yes
-
     - name: Restart postfix service
       systemd:
         name: postfix
@@ -155,3 +151,4 @@
       systemd:
         name: dovecot
         state: restarted
+
