@@ -15,7 +15,12 @@
           - postfix
           - dovecot
         state: present
-
+    - name: Set DNS to 10.10.53.1 in resolv.conf
+      lineinfile:
+        path: /etc/resolv.conf
+        regexp: '^nameserver'
+        line: 'nameserver 10.10.53.1'
+      become: yes
     - name: Configure /etc/postfix/main.cf
       copy:
         dest: /etc/postfix/main.cf
