@@ -52,9 +52,9 @@ vyos_ssh_port: 22
 # --- Mail Server 설정 ---
 mail_server_vm_name: mail-server-01
 mail_os_user: root
-mail_ssh_pass: "VMware1!"
-mail_ip: 172.16.2.100/24                         # VLAN 20
-mail_gateway: 172.16.1.100
+mail_ssh_pass: "P@ssw0rd"
+mail_ip: 172.16.2.100/24                     # VLAN 20
+mail_gateway: 172.16.2.1
 
 # --- Linux Server 설정 (Nginx용) ---
 nginx_server_vm_name: nginx-server-01
