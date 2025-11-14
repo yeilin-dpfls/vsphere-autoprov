@@ -1,14 +1,12 @@
-# /root/autoprov/vsphere-autoprov/roles/vyos_network/tasks/main.yml
 ---
 - name: 🚨 Wait for Guest Operations Agent to initialize
   ansible.builtin.pause:
-    seconds: 60  # ⭐ 30 → 60으로 변경
+    seconds: 60
     prompt: "Waiting for Guest Operations readiness..."
   delegate_to: localhost
 
 - name: 1. Configure VyOS Network, Routing, and NAT (DHCP-based)
   community.vmware.vmware_vm_shell:
-      # VCSA 접속 정보
       hostname: '{{ vcenter_hostname }}'
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
@@ -18,61 +16,78 @@
       vm_id: '{{ vyos_vm_name }}'      
       vm_id_type: vm_name
       
-      # VyOS 초기 접근 정보
       vm_username: '{{ vyos_os_user }}' 
       vm_password: '{{ vyos_ssh_pass }}' 
       
-      # 실행 쉘
       vm_shell: /bin/vbash
       
-      # VyOS 설정 명령 주입
       vm_shell_args: |-
         -c "source /opt/vyatta/etc/functions/script-template
         configure
         
-        # 1. 관리자 계정 비밀번호 및 SSH 설정 (향후 Playbook을 위한 필수 설정)
+        # 1. SSH 설정
         set service ssh port {{ vyos_ssh_port }}
         
-        # 2. Outside NIC 설정 (eth2: Control Node 통신용)
-        set interfaces ethernet eth1 address dhcp
-        set interfaces ethernet eth1 description 'Outside (DHCP)'
+        # 2. eth1 = VM Network (Outside) - IP 2개 할당
+        set interfaces ethernet eth1 address 10.10.10.111/8
+        set interfaces ethernet eth1 address 10.10.10.120/8
+        set interfaces ethernet eth1 address 10.10.10.130/8
+        set interfaces ethernet eth1 description 'Outside-Management'
         
-        # 3. Inside NIC 설정 (eth1: DVS 트렁크, VLAN 기반 서브 인터페이스)
-        set interfaces ethernet eth2 description 'Inside Trunk'
+        # 3. eth2 = DVS 포트그룹 (Inside, VLAN Trunk)
+        set interfaces ethernet eth2 description 'Inside-Trunk-DVS'
+        
+        # VLAN 4094 서브 인터페이스
         set interfaces ethernet eth2 vif 4094 address {{ vyos_gw_vlan4094 }}
-        set interfaces ethernet eth2 vif 4094 description 'VLAN_4904_Base'
+        set interfaces ethernet eth2 vif 4094 description 'VLAN_4094_Base'
         
-        # VLAN 90 (Manage) 서브 인터페이스 설정
+        # VLAN 90 (Manage)
         set interfaces ethernet eth2 vif {{ vlan_manage }} address {{ vyos_gw_vlan90 }}
         set interfaces ethernet eth2 vif {{ vlan_manage }} description 'VLAN_90_Manage' 
         
-        # VLAN 20 (Mail Server) 서브 인터페이스 설정
+        # VLAN 20 (Mail)
         set interfaces ethernet eth2 vif {{ vlan_mail_server }} address {{ vyos_gw_vlan20 }} 
-        set interfaces ethernet eth2 vif {{ vlan_mail_server }} description 'VLAN_20_Mail_GW'
+        set interfaces ethernet eth2 vif {{ vlan_mail_server }} description 'VLAN_20_Mail'
         
-        # VLAN 30 (Nginx Server) 서브 인터페이스 설정
+        # VLAN 30 (Nginx)
         set interfaces ethernet eth2 vif {{ vlan_nginx_server }} address {{ vyos_gw_vlan30 }}
-        set interfaces ethernet eth2 vif {{ vlan_nginx_server }} description 'VLAN_30_Nginx_GW'
+        set interfaces ethernet eth2 vif {{ vlan_nginx_server }} description 'VLAN_30_Nginx'
         
-        # 4. 라우팅 및 NAT 설정
+        # 4. 라우팅
         set protocols static route 0.0.0.0/0 next-hop {{ vyos_default_gateway }}
+        
+        # 5. NAT (SNAT) - Inside → Outside
         set nat source rule 100 outbound-interface eth1
         set nat source rule 100 source address 172.16.3.0/24
         set nat source rule 100 translation address masquerade
-
+        
         set nat source rule 200 outbound-interface eth1
         set nat source rule 200 source address 172.16.2.0/24
         set nat source rule 200 translation address masquerade
         
-        # 5. DNS 및 NTP 설정
+        # 6. DNAT - 10.10.10.120 → Mail Server (172.16.2.100)
+        set nat destination rule 120 description 'DNAT-to-Mail-Server'
+        set nat destination rule 120 inbound-interface eth1
+        set nat destination rule 120 destination address 10.10.10.120
+        set nat destination rule 120 translation address 172.16.2.100
+        
+        # 7. DNAT - 10.10.10.130 → Nginx Server (172.16.3.100)
+        set nat destination rule 130 description 'DNAT-to-Nginx-Server'
+        set nat destination rule 130 inbound-interface eth1
+        set nat destination rule 130 destination address 10.10.10.130
+        set nat destination rule 130 translation address 172.16.3.100
+        
+        # 8. DNS/NTP
         set system name-server 8.8.8.8
         set system ntp server kr.pool.ntp.org
-
+        
         commit
         save"
-      wait_for_process: True
+      wait_for_process: true
       timeout: 240
-
   delegate_to: localhost
   register: vyos_shell_config
 
+- name: Display VyOS configuration result
+  debug:
+    var: vyos_shell_config
