@@ -6,14 +6,14 @@
 #    : notify가 없으므로, 이 태스크가 'changed' 상태가 되어도 핸들러를 호출하지 않음
 # ----------------------------------------------------------------------
 - name: Deploy Nginx default config from template (no restart)
-  ansible.builtin.template:
-    src: default.conf.j2
+  ansible.builtin.template:   # <- name: 보다 공백 2칸
+    src: default.conf.j2      # <- template: 보다 공백 2칸 (총 4칸)
     dest: "{{ nginx_conf_path }}"
     owner: root
     group: root
     mode: '0644'
-    register: nginx_config_deployment
-
+  register: nginx_config_deployment
+  notify: Restart Nginx service
 # ----------------------------------------------------------------------
 # 2. Nginx 설정이 변경되었으면 재시작을 강제로 수행
 #    : 위 태스크가 변경(changed)되었을 때만 재시작하도록 'when' 조건 추가 가능
