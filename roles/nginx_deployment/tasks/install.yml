@@ -1,3 +1,4 @@
+# roles/nginx_deployment/tasks/install.yml (수정)
 ---
 # roles/nginx_deployment/tasks/install.yml
 
@@ -13,6 +14,15 @@
     state: latest
   when: ansible_facts['os_family'] == 'RedHat'
 
+- name: Allow HTTP (80) port through firewalld (RHEL family) 🔥  # <--- 이 태스크를 추가
+  ansible.builtin.firewalld:
+    service: http
+    permanent: true
+    state: enabled
+    immediate: true # 즉시 리로드하여 적용
+  when: ansible_facts['os_family'] == 'RedHat'
+  # 참고: firewalld 모듈을 사용하려면 대상 서버에 firewalld가 실행 중이어야 합니다.
+
 - name: Install Nginx package on Debian-family
   ansible.builtin.apt:
     name: "{{ nginx_package_name }}"
@@ -25,4 +35,3 @@
     name: "{{ nginx_service_name }}"
     enabled: true
     state: started
-
