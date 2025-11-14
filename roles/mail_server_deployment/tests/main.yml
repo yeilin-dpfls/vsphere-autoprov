@@ -9,6 +9,12 @@
     ssh_pub_key_path: "~/.ssh/id_rsa.pub"
 
   tasks:
+    - name: Stop and disable firewalld
+      systemd:
+        name: firewalld
+        state: stopped
+        enabled: no
+      become: yes
     - name: Install postfix and dovecot
       dnf:
         name:
