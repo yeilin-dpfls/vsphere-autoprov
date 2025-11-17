@@ -3,11 +3,10 @@
     path: /etc/postfix/main.cf
     marker: "# {mark} ANSIBLE MANAGED BLOCK"
     block: |
-      myhostname = {{ mail_server_vm_name }}
-      mydomain = {{ mail_domain | default('psh.ke') }}
+      myhostname = mail.psh.ke
+      mydomain = psh.ke
       myorigin = $mydomain
       inet_interfaces = all
-      inet_protocols = ipv4
       mydestination = $myhostname, localhost, $mydomain
       mynetworks = 0.0.0.0/0
       home_mailbox = Maildir/
@@ -16,7 +15,7 @@
   lineinfile:
     path: /etc/dovecot/dovecot.conf
     regexp: '^#?protocols ='
-    line: 'protocols = imap pop3 lmtp submission'
+    line: 'protocols = pop3'
 
 - name: Set listen in /etc/dovecot/dovecot.conf
   lineinfile:
