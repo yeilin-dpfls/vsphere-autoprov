@@ -7,8 +7,8 @@ vcenter_cluster: Cluster-00            # 클러스터 이름으로 변경 필요
 vcenter_folder: /Datacenter00/vm
 
 # Datastore 할당 (VMware VM 생성 시 사용)
-vyos_datastore: datastore1
-linux_datastore: datastore2
+vyos_datastore: NFS
+linux_datastore: NFS
 
 # VM 템플릿 이름 
 vyos_template_name: vyos-template
