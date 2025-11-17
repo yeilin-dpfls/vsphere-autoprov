@@ -46,7 +46,23 @@
 - name: Ensure a simple index.html exists (do not overwrite if present)
   ansible.builtin.copy:
     dest: "{{ nginx_root_path }}/{{ nginx_index_file }}"
-    content: "<html><body><h1>Nginx deployed (no auto-restart)</h1></body></html>"
+    content: |
+      <html>
+      <head>
+          <title>Welcome to nginx!</title>
+      </head>
+      <body>
+      <h1>Welcome to nginx!</h1>
+      <p>If you see this page, the nginx web server is successfully installed and working. Further configuration is required.</p>
+
+      <p>For online documentation and support please refer to
+      <a href="http://nginx.org/">nginx.org</a>.<br/>
+      Commercial support is available at
+      <a href="http://nginx.com/">nginx.com</a>.</p>
+
+      <p><em>Thank you for using nginx.</em></p>
+      </body>
+      </html>
     owner: root
     group: root
     mode: '0644'
