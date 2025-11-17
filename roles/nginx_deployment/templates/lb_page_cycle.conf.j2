@@ -1,0 +1,9 @@
+server {
+    listen {{ nginx_listen_port }};
+    server_name {{ nginx_server_name }};
+
+    location / {
+        content_by_lua_file {{ nginx_lua_conf_path }};
+    }
+}
+

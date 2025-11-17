@@ -1,37 +1,73 @@
-# roles/nginx_deployment/tasks/install.yml (수정)
 ---
 # roles/nginx_deployment/tasks/install.yml
+# Assumes the play sets `gather_facts: yes` and `become: yes`.
 
+# 1) 안전하게 facts가 없으면 수집 (플레이에서 gather_facts: yes이면 보통 건너뜀)
+- name: Ensure facts are gathered
+  ansible.builtin.setup:
+  when: ansible_facts is not defined
+
+# 2) apt 캐시 업데이트 (Debian 계열)
+- name: Ensure apt cache is updated (Debian family)
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_facts.os_family | default('') == 'Debian'
+
+# 3) EPEL (RHEL 계열)
 - name: Ensure EPEL repository is present (RHEL family)
   ansible.builtin.yum:
     name: epel-release
     state: present
-  when: ansible_facts['os_family'] == 'RedHat'
+  when: ansible_facts.os_family | default('') == 'RedHat'
 
-- name: Install Nginx package on RHEL-family
-  ansible.builtin.yum:
+# 4) Nginx 설치 (패키지 모듈 사용 — 플랫폼 무관)
+- name: Install Nginx package (cross-platform)
+  ansible.builtin.package:
     name: "{{ nginx_package_name }}"
-    state: latest
-  when: ansible_facts['os_family'] == 'RedHat'
+    state: present
 
-- name: Allow HTTP (80) port through firewalld (RHEL family) 🔥  # <--- 이 태스크를 추가
+# 5) 방화벽 설정 — firewalld (RHEL) 또는 ufw (Debian) (best-effort)
+- name: Allow HTTP (80) port through firewalld (RHEL family) if available
   ansible.builtin.firewalld:
     service: http
     permanent: true
     state: enabled
-    immediate: true # 즉시 리로드하여 적용
-  when: ansible_facts['os_family'] == 'RedHat'
-  # 참고: firewalld 모듈을 사용하려면 대상 서버에 firewalld가 실행 중이어야 합니다.
+    immediate: true
+  when: ansible_facts.os_family | default('') == 'RedHat'
+  ignore_errors: true
 
-- name: Install Nginx package on Debian-family
-  ansible.builtin.apt:
-    name: "{{ nginx_package_name }}"
-    state: latest
-    update_cache: yes
-  when: ansible_facts['os_family'] == 'Debian'
+- name: Ensure UFW allows 80 (Debian/Ubuntu with ufw) (best-effort)
+  ansible.builtin.command: ufw allow 80/tcp
+  when: ansible_facts.os_family | default('') == 'Debian'
+  changed_when: false
+  ignore_errors: true
 
-- name: Ensure Nginx service is enabled and started
+# 6) 서비스 활성화 및 시작 — systemd가 없을 수 있으니 ignore_errors 사용
+- name: Ensure Nginx service is enabled and started (systemd)
   ansible.builtin.systemd:
     name: "{{ nginx_service_name }}"
     enabled: true
     state: started
+  ignore_errors: true
+
+# 7) 레거시 init/systemV 환경을 위한 fallback (optional)
+- name: Ensure Nginx service is started using service module (fallback)
+  ansible.builtin.service:
+    name: "{{ nginx_service_name }}"
+    state: started
+    enabled: yes
+  when: ansible_facts.pkg_mgr is defined
+  ignore_errors: true
+
+# 8) 검증
+- name: Debug nginx binary/version (sanity)
+  ansible.builtin.command: nginx -v
+  register: nginx_ver
+  changed_when: false
+  failed_when: false
+
+- name: Show nginx version output
+  ansible.builtin.debug:
+    var: nginx_ver.stderr  # nginx -v writes to stderr
+
