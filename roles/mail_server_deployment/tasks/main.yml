@@ -16,59 +16,19 @@
           - dovecot
         state: present
 
-    - name: Set myhostname in /etc/postfix/main.cf
-      lineinfile:
+    - name: /etc/postfix/main.cf에 설정 블록 추가 (기존 내용 유지)
+      blockinfile:
         path: /etc/postfix/main.cf
-        regexp: '^#?myhostname ='
-        line: 'myhostname = {{ mail_hostname }}'
-
-    - name: Set mydomain in /etc/postfix/main.cf
-      lineinfile:
-        path: /etc/postfix/main.cf
-        regexp: '^#?mydomain ='
-        line: 'mydomain = {{ mail_domain }}'
-
-    - name: Set myorigin in /etc/postfix/main.cf
-      lineinfile:
-        path: /etc/postfix/main.cf
-        regexp: '^#?myorigin ='
-        line: 'myorigin = $mydomain'
-
-    - name: Set inet_interfaces in /etc/postfix/main.cf
-      lineinfile:
-        path: /etc/postfix/main.cf
-        regexp: '^#?inet_interfaces ='
-        line: 'inet_interfaces = all'
-
-    - name: Set inet_protocols in /etc/postfix/main.cf
-      lineinfile:
-        path: /etc/postfix/main.cf
-        regexp: '^#?inet_protocols ='
-        line: 'inet_protocols = ipv4'
-
-    - name: Set mydestination in /etc/postfix/main.cf
-      lineinfile:
-        path: /etc/postfix/main.cf
-        regexp: '^#?mydestination ='
-        line: 'mydestination = $myhostname, localhost, {{ mail_domain }}, localhost, {{ mail_domain }}'
-
-    - name: Set relayhost in /etc/postfix/main.cf
-      lineinfile:
-        path: /etc/postfix/main.cf
-        regexp: '^#?relayhost ='
-        line: 'relayhost ='
-
-    - name: Set mynetworks in /etc/postfix/main.cf
-      lineinfile:
-        path: /etc/postfix/main.cf
-        regexp: '^#?mynetworks ='
-        line: 'mynetworks = 0.0.0.0/0'
-
-    - name: Set home_mailbox in /etc/postfix/main.cf
-      lineinfile:
-        path: /etc/postfix/main.cf
-        regexp: '^#?home_mailbox ='
-        line: 'home_mailbox = Maildir/'
+        marker: "# {mark} ANSIBLE MANAGED BLOCK"
+        block: |
+          myhostname = {{ mail_hostname }}
+          mydomain = {{ mail_domain }}
+          myorigin = $mydomain
+          inet_interfaces = all
+          inet_protocols = ipv4
+          mydestination = $myhostname, localhost, $mydomain
+          mynetworks = 0.0.0.0/0
+          home_mailbox = Maildir/
 
     - name: Set protocols in /etc/dovecot/dovecot.conf
       lineinfile:
@@ -137,10 +97,6 @@
         user: "{{ user_name }}"
         state: present
         key: "{{ lookup('file', ssh_pub_key_path) }}"
-
-    - name: Set default gateway to 10.10.53.1 using nmcli
-      command: nmcli connection modify "{{ ansible_default_ipv4.interface }}" ipv4.gateway 10.10.53.1
-      become: yes
 
     - name: Restart postfix service
       systemd:
