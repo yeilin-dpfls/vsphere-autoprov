@@ -28,10 +28,10 @@
   roles:
     - nginx_deployment
 
-      #- name: 5. Deploy Mail Server Application (Mail 담당자 영역)
-      #hosts: mail_server_vm
-      #gather_facts: no
-      #vars_files:
-      #- ../group_vars/all.yml
-      #roles:
-      #- mail_server_deployment
+- name: 5. Deploy Mail Server Application (Mail 담당자 영역)
+  hosts: mailservers
+  gather_facts: no
+  vars_files:
+   - ../group_vars/all.yml
+  roles:
+   - mail_server_deployment

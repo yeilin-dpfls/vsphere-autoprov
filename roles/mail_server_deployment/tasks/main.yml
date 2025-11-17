@@ -1,110 +1,92 @@
-- name: Install and configure Postfix and Dovecot mail server with SSH key distribution and gateway setting
-  hosts: mailservers
-  become: yes
-  vars:
-    mail_hostname: "mail.psh.ke"
-    mail_domain: "psh.ke"
-    user_name: "test"
-    user_password: "VMware1!"
-    ssh_pub_key_path: "~/.ssh/id_rsa.pub"
+- name: /etc/postfix/main.cf에 설정 블록 추가 (기존 내용 유지)
+  blockinfile:
+    path: /etc/postfix/main.cf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      myhostname = {{ mail_server_vm_name }}
+      mydomain = {{ mail_domain | default('psh.ke') }}
+      myorigin = $mydomain
+      inet_interfaces = all
+      inet_protocols = ipv4
+      mydestination = $myhostname, localhost, $mydomain
+      mynetworks = 0.0.0.0/0
+      home_mailbox = Maildir/
 
-  tasks:
-    - name: Install postfix and dovecot
-      dnf:
-        name:
-          - postfix
-          - dovecot
-        state: present
+- name: Set protocols in /etc/dovecot/dovecot.conf
+  lineinfile:
+    path: /etc/dovecot/dovecot.conf
+    regexp: '^#?protocols ='
+    line: 'protocols = imap pop3 lmtp submission'
 
-    - name: /etc/postfix/main.cf에 설정 블록 추가 (기존 내용 유지)
-      blockinfile:
-        path: /etc/postfix/main.cf
-        marker: "# {mark} ANSIBLE MANAGED BLOCK"
-        block: |
-          myhostname = {{ mail_hostname }}
-          mydomain = {{ mail_domain }}
-          myorigin = $mydomain
-          inet_interfaces = all
-          inet_protocols = ipv4
-          mydestination = $myhostname, localhost, $mydomain
-          mynetworks = 0.0.0.0/0
-          home_mailbox = Maildir/
+- name: Set listen in /etc/dovecot/dovecot.conf
+  lineinfile:
+    path: /etc/dovecot/dovecot.conf
+    regexp: '^#?listen ='
+    line: 'listen = *, ::'
 
-    - name: Set protocols in /etc/dovecot/dovecot.conf
-      lineinfile:
-        path: /etc/dovecot/dovecot.conf
-        regexp: '^#?protocols ='
-        line: 'protocols = imap pop3 lmtp submission'
+- name: Set base_dir in /etc/dovecot/dovecot.conf
+  lineinfile:
+    path: /etc/dovecot/dovecot.conf
+    regexp: '^#?base_dir ='
+    line: 'base_dir = /var/run/dovecot'
 
-    - name: Set listen in /etc/dovecot/dovecot.conf
-      lineinfile:
-        path: /etc/dovecot/dovecot.conf
-        regexp: '^#?listen ='
-        line: 'listen = *, ::'
+- name: Configure mail_location in /etc/dovecot/conf.d/10-mail.conf
+  lineinfile:
+    path: /etc/dovecot/conf.d/10-mail.conf
+    regexp: '^#?mail_location ='
+    line: 'mail_location = maildir:~/Maildir'
 
-    - name: Set base_dir in /etc/dovecot/dovecot.conf
-      lineinfile:
-        path: /etc/dovecot/dovecot.conf
-        regexp: '^#?base_dir ='
-        line: 'base_dir = /var/run/dovecot'
+- name: Disable plaintext auth restriction in /etc/dovecot/conf.d/10-auth.conf
+  lineinfile:
+    path: /etc/dovecot/conf.d/10-auth.conf
+    regexp: '^disable_plaintext_auth ='
+    line: 'disable_plaintext_auth = no'
 
-    - name: Configure mail_location in /etc/dovecot/conf.d/10-mail.conf
-      lineinfile:
-        path: /etc/dovecot/conf.d/10-mail.conf
-        regexp: '^#?mail_location ='
-        line: 'mail_location = maildir:~/Maildir'
+- name: Disable SSL in /etc/dovecot/conf.d/10-ssl.conf
+  lineinfile:
+    path: /etc/dovecot/conf.d/10-ssl.conf
+    regexp: '^#?ssl ='
+    line: 'ssl = no'
 
-    - name: Disable plaintext auth restriction in /etc/dovecot/conf.d/10-auth.conf
-      lineinfile:
-        path: /etc/dovecot/conf.d/10-auth.conf
-        regexp: '^disable_plaintext_auth ='
-        line: 'disable_plaintext_auth = no'
+- name: Disable firewalld (firewall)
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
 
-    - name: Disable SSL in /etc/dovecot/conf.d/10-ssl.conf
-      lineinfile:
-        path: /etc/dovecot/conf.d/10-ssl.conf
-        regexp: '^#?ssl ='
-        line: 'ssl = no'
+- name: Enable and start postfix
+  systemd:
+    name: postfix
+    enabled: yes
+    state: started
 
-    - name: Disable firewalld (firewall)
-      service:
-        name: firewalld
-        state: stopped
-        enabled: no
+- name: Enable and start dovecot
+  systemd:
+    name: dovecot
+    enabled: yes
+    state: started
 
-    - name: Enable and start postfix
-      systemd:
-        name: postfix
-        enabled: yes
-        state: started
+- name: Create user with password
+  user:
+    name: "{{ mail_os_user }}"
+    password: "{{ mail_ssh_pass | password_hash('sha512') }}"
+    state: present
+    shell: /bin/bash
+    create_home: yes
 
-    - name: Enable and start dovecot
-      systemd:
-        name: dovecot
-        enabled: yes
-        state: started
+- name: Distribute SSH public key to user authorized_keys
+  authorized_key:
+    user: "{{ mail_os_user }}"
+    state: present
+    key: "{{ lookup('file', ssh_pub_key_path) }}"
 
-    - name: Create user with password
-      user:
-        name: "{{ user_name }}"
-        password: "{{ user_password | password_hash('sha512') }}"
-        state: present
-        shell: /bin/bash
-        create_home: yes
+- name: Restart postfix service
+  systemd:
+    name: postfix
+    state: restarted
 
-    - name: Distribute SSH public key to user authorized_keys
-      authorized_key:
-        user: "{{ user_name }}"
-        state: present
-        key: "{{ lookup('file', ssh_pub_key_path) }}"
-
-    - name: Restart postfix service
-      systemd:
-        name: postfix
-        state: restarted
-
-    - name: Restart dovecot service
-      systemd:
-        name: dovecot
-        state: restarted
+- name: Restart dovecot service
+  systemd:
+    name: dovecot
+    state: restarted
 
