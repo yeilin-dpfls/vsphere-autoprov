@@ -1,6 +1,33 @@
 ---
 # roles/nginx_deployment/tasks/configure.yml
+# 0-1. Nginx SSL 디렉토리 생성 (추가)
+# ----------------------------------------------------------------------
+- name: Ensure Nginx SSL directory exists
+  ansible.builtin.file:
+    path: /etc/nginx/ssl
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
 
+# ----------------------------------------------------------------------
+# 0-2. SSL 인증서 및 키 파일 배포 (기존 태스크)
+# ----------------------------------------------------------------------
+- name: Deploy SSL Private Key file
+  ansible.builtin.copy:
+    src: server.key # <-- 이 파일 배포 태스크를 추가합니다.
+    dest: /etc/nginx/ssl/server.key
+    owner: root
+    group: root
+    mode: '0600' # <-- 가장 중요한 보안 설정입니다.
+
+- name: Deploy SSL Certificate file
+  ansible.builtin.copy:
+    src: server.crt
+    dest: /etc/nginx/ssl/server.crt # 이 경로가 이제 존재하게 됩니다.
+    owner: root
+    group: root
+    mode: '0644'
 # ----------------------------------------------------------------------
 # 1. Nginx 설정 파일 배포 (notify 파라미터 제거)
 #    : notify가 없으므로, 이 태스크가 'changed' 상태가 되어도 핸들러를 호출하지 않음
@@ -13,7 +40,7 @@
     group: root
     mode: '0644'
   register: nginx_config_deployment
-  notify: Restart Nginx service
+#  notify: Restart Nginx service
 # ----------------------------------------------------------------------
 # 2. Nginx 설정이 변경되었으면 재시작을 강제로 수행
 #    : 위 태스크가 변경(changed)되었을 때만 재시작하도록 'when' 조건 추가 가능
