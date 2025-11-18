@@ -37,8 +37,25 @@
   when: ansible_facts.os_family | default('') == 'RedHat'
   ignore_errors: true
 
+# 5-B) RHEL 계열 (firewalld) - HTTPS (443) 허용 (🔥 추가됨)
+- name: Allow HTTPS (443) port through firewalld (RHEL family)
+  ansible.builtin.firewalld:
+    port: 443/tcp
+    permanent: true
+    state: enabled
+    immediate: true
+  when: ansible_facts.os_family | default('') == 'RedHat'
+  ignore_errors: true
+
 - name: Ensure UFW allows 80 (Debian/Ubuntu with ufw) (best-effort)
   ansible.builtin.command: ufw allow 80/tcp
+  when: ansible_facts.os_family | default('') == 'Debian'
+  changed_when: false
+  ignore_errors: true
+
+# 5-D) Debian 계열 (ufw) - HTTPS (443) 허용 (🔥 추가됨)
+- name: Ensure UFW allows 443 (Debian/Ubuntu with ufw)
+  ansible.builtin.command: ufw allow 443/tcp
   when: ansible_facts.os_family | default('') == 'Debian'
   changed_when: false
   ignore_errors: true
