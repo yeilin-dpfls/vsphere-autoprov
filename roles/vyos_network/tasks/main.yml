@@ -87,6 +87,8 @@
         set nat destination rule 190 inbound-interface eth1
         set nat destination rule 190 destination address 10.10.10.190
         set nat destination rule 190 translation address 172.16.9.100
+        #set nat destination rule 190 destination port 80
+        #set nat destination rule 190 translation port 80
         
         # 8. DNS/NTP
         set system name-server 8.8.8.8

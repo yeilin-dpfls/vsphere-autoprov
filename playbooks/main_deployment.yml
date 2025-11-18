@@ -42,7 +42,7 @@
   vars_files:
     - ../group_vars/all.yml
   roles:
-    - zabbix_agent_deploy
+    - zabbix_setup
     
 # -----------------------------------------------------
 # 7. Zabbix Agent 배포 및 방화벽 설정 (Nginx/Mail 서버)

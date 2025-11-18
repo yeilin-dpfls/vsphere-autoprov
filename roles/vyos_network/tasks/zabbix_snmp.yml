@@ -1,26 +1,64 @@
 # roles/vyos_network/tasks/zabbix_snmp.yml
 ---
-- name: 1. Configure SNMP Community on VyOS
+- name: 1. Configure SNMP Community and Details
   vyos.vyos.vyos_config:
     lines:
-      - set service snmp community ZABBIX authorization read-only
+      # SNMP 읽기 전용(ro) 접근 권한 설정
+      - set service snmp community ZABBIX authorization ro
       - set service snmp community ZABBIX network 0.0.0.0/0
       - set service snmp contact "Project Monitoring Admin"
       - set service snmp location "Project Lab Environment"
 
 - name: 2. Allow Zabbix Server to access SNMP (161/UDP)
+  # VyOS 자체(local)로 들어오는 SNMP 트래픽 허용
   vyos.vyos.vyos_config:
     lines:
+      # VyOS 자체로 들어오는 트래픽 (local)에 대한 방화벽 규칙 정의
       - set firewall name LOCAL_IN_MONITOR default-action drop
       - set firewall name LOCAL_IN_MONITOR rule 10 action accept
       - set firewall name LOCAL_IN_MONITOR rule 10 destination port 161
       - set firewall name LOCAL_IN_MONITOR rule 10 protocol udp
-      - set firewall name LOCAL_IN_MONITOR rule 10 source address {{ zabbix_ip_address }}
-
+      # Zabbix Server IP만 SNMP 포트로 접근 허용
+      - set firewall name LOCAL_IN_MONITOR rule 10 source address {{ zabbix_ip }}
       - set interfaces ethernet eth2 firewall local name LOCAL_IN_MONITOR
 
-- name: 3. Commit and Save VyOS Configuration
+# -----------------------------------------------------
+# 3. 🚨 OUTSIDE -> INSIDE 포워딩 규칙 추가 (Ping 및 Web 접속 해결)
+# -----------------------------------------------------
+- name: 3. Configure Forwarding Rules for Internal VLANs (Outside to Inside)
   vyos.vyos.vyos_config:
-    commit: yes
-    save: yes
+    lines:
+      # 🚨 포워딩 방화벽 규칙 생성 (OUTSIDE_TO_INSIDE)
+      - set firewall name OUTSIDE_TO_INSIDE default-action drop
+      
+      # 🚨 Rule 10: HTTP (웹 접속) 허용 규칙 추가
+      - set firewall name OUTSIDE_TO_INSIDE rule 10 action accept
+      - set firewall name OUTSIDE_TO_INSIDE rule 10 destination port 80
+      - set firewall name OUTSIDE_TO_INSIDE rule 10 protocol tcp
+      - set firewall name OUTSIDE_TO_INSIDE rule 10 state new enable
 
+      # 🚨 Rule 11: ICMP (Ping) 허용 규칙 추가 (새로운 규칙으로 분리)
+      - set firewall name OUTSIDE_TO_INSIDE rule 11 action accept
+      - set firewall name OUTSIDE_TO_INSIDE rule 11 protocol icmp
+      - set firewall name OUTSIDE_TO_INSIDE rule 11 state new enable
+      
+      # 🚨 Rule 20: Established/Related 트래픽 허용 (필수)
+      - set firewall name OUTSIDE_TO_INSIDE rule 20 action accept
+      - set firewall name OUTSIDE_TO_INSIDE rule 20 state established enable
+      - set firewall name OUTSIDE_TO_INSIDE rule 20 state related enable
+
+      # 모든 외부 IP 허용
+      - set firewall name OUTSIDE_TO_INSIDE rule 10 source address 0.0.0.0/0
+      - set firewall name OUTSIDE_TO_INSIDE rule 11 source address 0.0.0.0/0
+      - set firewall name OUTSIDE_TO_INSIDE rule 20 source address 0.0.0.0/0
+      
+
+      # 🚨 eth1 (Outside) 인터페이스에 'in' 규칙으로 포워딩 적용
+      - set interfaces ethernet eth1 firewall in name OUTSIDE_TO_INSIDE
+
+# -----------------------------------------------------
+# 4. Commit and Save VyOS Configuration (통합)
+# -----------------------------------------------------
+- name: 4. Commit and Save VyOS Configuration
+  vyos.vyos.vyos_config:
+    save: yes 

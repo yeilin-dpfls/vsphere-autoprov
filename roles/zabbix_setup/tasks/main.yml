@@ -1,0 +1,61 @@
+# roles/zabbix_setup/tasks/main.yml
+---
+- name: 1. Start and Enable PostgreSQL Service
+  ansible.builtin.systemd:
+    name: postgresql
+    state: started
+    enabled: yes
+  become: yes
+
+- name: 2. Create Zabbix Database User and Database
+  community.general.postgresql_user:
+    db: postgres
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    role_attr_flags: CREATEROLE,LOGIN
+    state: present
+  become: yes
+  become_user: postgres
+
+- name: 3. Create Zabbix Database
+  community.general.postgresql_db:
+    name: "{{ db_name }}"
+    owner: "{{ db_user }}"
+    encoding: UTF8
+    state: present
+  become: yes
+  become_user: postgres
+
+- name: 4. Import Zabbix Initial Schema and Data
+  ansible.builtin.command: zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz | psql -h localhost -U {{ db_user }} -d {{ db_name }}
+  args:
+    creates: /var/lib/pgsql/data/zabbix_schema_imported
+  become: yes
+  become_user: postgres
+
+- name: 5. Configure Zabbix Server DB Password
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_server.conf
+    regexp: '^# DBPassword='
+    line: 'DBPassword={{ db_password }}'
+    state: present
+  become: yes
+
+- name: 6. Configure PHP Timezone and Nginx Hostname (Web Frontend Settings)
+  ansible.builtin.lineinfile:
+    path: /etc/php-fpm.d/zabbix.conf # 또는 해당 PHP-FPM 설정 파일 경로
+    regexp: '^;php_value\[date\.timezone\] ='
+    line: 'php_value[date.timezone] = Asia/Seoul'
+    state: present
+  become: yes
+
+- name: 7. Ensure Zabbix Web Services are Running and Enabled (Fix inactive/dead error)
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started # 즉시 시작
+    enabled: yes   # 자동 시작
+  loop:
+    - zabbix-server
+    - nginx
+    - php-fpm
+  become: yes
