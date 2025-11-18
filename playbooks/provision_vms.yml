@@ -59,4 +59,52 @@
             device_type: vmxnet3
             connected: yes
             start_connected: yes
+    
+    # ----------------------------------------------------------------------
+    # D. Zabbix Server VM 생성 (NIC 1개 연결, DPG-zabbix-server)
+    # ----------------------------------------------------------------------
+    - name: Call vm_provisioning role for Zabbix Server
+      include_role:
+        name: vm_provisioning
+      vars:
+        vm_name: "{{ zabbix_server_vm_name }}"
+        vm_template: "{{ zabbix_server_template_name }}"
+        vm_datastore: "{{ linux_datastore }}"
+        vm_nics:
+          - name: "{{ pg_manage }}"  # (DPG-manage, VLAN 90)
+            device_type: vmxnet3
+            connected: yes
+            start_connected: yes
+
+    # ----------------------------------------------------------------------
+    # E-1. Nginx Backend Server02 VM 생성 (NIC 1개 연결, DPG-nginx-sever)
+    # ----------------------------------------------------------------------
+    - name: Call vm_provisioning role for Nginx Backend Server02
+      include_role:
+        name: vm_provisioning
+      vars:
+        vm_name: "{{ nginx_backend_02_vm_name }}"
+        vm_template: "{{ nginx_backend_02_template_name }}"
+        vm_datastore: "{{ backend_datastore }}"
+        vm_nics:
+          - name: "{{ pg_nginx_server }}" 
+            device_type: vmxnet3
+            connected: yes
+            start_connected: yes
+    
+    # ----------------------------------------------------------------------
+    # E-2. Nginx Backend Server03 VM 생성 (NIC 1개 연결, DPG-nginx-sever)
+    # ----------------------------------------------------------------------
+    - name: Call vm_provisioning role for Nginx Backend Server03
+      include_role:
+        name: vm_provisioning
+      vars:
+        vm_name: "{{ nginx_backend_03_vm_name }}"
+        vm_template: "{{ nginx_backend_03_template_name }}"
+        vm_datastore: "{{ backend_datastore }}"
+        vm_nics:
+          - name: "{{ pg_nginx_server }}" 
+            device_type: vmxnet3
+            connected: yes
+            start_connected: yes
 

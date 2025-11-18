@@ -35,3 +35,55 @@
    - ../group_vars/all.yml
   roles:
    - mail_server_deployment
+
+- name: 6. Deploy Zabbix Server Application
+  hosts: zabbix_server
+  gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml
+  roles:
+    - zabbix_agent_deploy
+    
+# -----------------------------------------------------
+# 7. Zabbix Agent 배포 및 방화벽 설정 (Nginx/Mail 서버)
+# -----------------------------------------------------
+- name: 7. Deploy Zabbix Agent and Configure on Mail Server
+  hosts: mailservers # Mail 서버와 Nginx 서버 모두를 대상으로 함
+  gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml
+  vars:
+    ansible_user: "{{ mail_os_user }}"
+    ansible_password: "{{ mail_ssh_pass }}"
+    ansible_become: yes 
+  roles:
+    - zabbix_agent_deploy # 🚨 Agent 설정 Role 호출
+    
+- name: 7-5. Deploy Zabbix Agent and Configure on Nginx Servers
+  hosts: linux_server # Mail 서버와 Nginx 서버 모두를 대상으로 함
+  gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml
+  vars:
+    ansible_user: "{{ nginx_os_user }}"
+    ansible_password: "{{ nginx_ssh_pass }}"
+    ansible_become: yes 
+  roles:
+    - zabbix_agent_deploy # 🚨 Agent 설정 Role 호출
+# -----------------------------------------------------
+# 8. VyOS SNMP 설정 및 Zabbix Server 접근 허용
+# -----------------------------------------------------
+- name: 8. Configure VyOS SNMP Monitoring
+  hosts: vyos_router
+  gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml
+  vars:
+    ansible_user: "{{ vyos_os_user }}"
+    ansible_password: "{{ vyos_ssh_pass }}"
+    ansible_connection: network_cli 
+    ansible_network_os: vyos
+  tasks:
+    - name: Include Zabbix SNMP Configuration
+      ansible.builtin.include_tasks: ../roles/vyos_network/tasks/zabbix_snmp.yml
+

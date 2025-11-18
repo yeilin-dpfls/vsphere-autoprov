@@ -32,6 +32,7 @@
         set interfaces ethernet eth1 address 10.10.10.111/8
         set interfaces ethernet eth1 address 10.10.10.120/8
         set interfaces ethernet eth1 address 10.10.10.130/8
+        set interfaces ethernet eth1 address 10.10.10.190/8
         set interfaces ethernet eth1 description 'Outside-Management'
         
         # 3. eth2 = DVS 포트그룹 (Inside, VLAN Trunk)
@@ -64,6 +65,10 @@
         set nat source rule 200 outbound-interface eth1
         set nat source rule 200 source address 172.16.2.0/24
         set nat source rule 200 translation address masquerade
+
+        set nat source rule 300 outbound-interface eth1
+        set nat source rule 300 source address 172.16.3.0/24
+        set nat source rule 300 translation address masquerade
         
         # 6. DNAT - 10.10.10.120 → Mail Server (172.16.2.100)
         set nat destination rule 120 description 'DNAT-to-Mail-Server'
@@ -76,6 +81,12 @@
         set nat destination rule 130 inbound-interface eth1
         set nat destination rule 130 destination address 10.10.10.130
         set nat destination rule 130 translation address 172.16.3.100
+
+        # 8. DNAT - 10.10.10.190 Zabbix(172.16.9.100)
+        set nat destination rule 190 description 'DNAT-to-Zabbix'
+        set nat destination rule 190 inbound-interface eth1
+        set nat destination rule 190 destination address 10.10.10.190
+        set nat destination rule 190 translation address 172.16.9.100
         
         # 8. DNS/NTP
         set system name-server 8.8.8.8

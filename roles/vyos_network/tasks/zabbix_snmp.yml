@@ -1,0 +1,26 @@
+# roles/vyos_network/tasks/zabbix_snmp.yml
+---
+- name: 1. Configure SNMP Community on VyOS
+  vyos.vyos.vyos_config:
+    lines:
+      - set service snmp community ZABBIX authorization read-only
+      - set service snmp community ZABBIX network 0.0.0.0/0
+      - set service snmp contact "Project Monitoring Admin"
+      - set service snmp location "Project Lab Environment"
+
+- name: 2. Allow Zabbix Server to access SNMP (161/UDP)
+  vyos.vyos.vyos_config:
+    lines:
+      - set firewall name LOCAL_IN_MONITOR default-action drop
+      - set firewall name LOCAL_IN_MONITOR rule 10 action accept
+      - set firewall name LOCAL_IN_MONITOR rule 10 destination port 161
+      - set firewall name LOCAL_IN_MONITOR rule 10 protocol udp
+      - set firewall name LOCAL_IN_MONITOR rule 10 source address {{ zabbix_ip_address }}
+
+      - set interfaces ethernet eth2 firewall local name LOCAL_IN_MONITOR
+
+- name: 3. Commit and Save VyOS Configuration
+  vyos.vyos.vyos_config:
+    commit: yes
+    save: yes
+

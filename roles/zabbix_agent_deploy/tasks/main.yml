@@ -1,0 +1,38 @@
+# tasks file for roles/zabbix_agent_deploy
+# roles/zabbix_agent_deploy/tasks/main.yml
+---
+- name: 1. Set Zabbix Server IP and Hostname in Agent Config
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_agentd.conf
+    regexp: '^#?Server='
+    # Zabbix Server의 IP (172.16.9.100)로 설정
+    line: "Server={{ zabbix_ip }}"
+    state: present
+    backup: yes
+  become: yes
+
+- name: 2. Set Unique Hostname (Uses OS Hostname)
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_agentd.conf
+    regexp: '^#?Hostname='
+    # Hostname=에 VM의 현재 OS 호스트 이름을 사용하도록 설정
+    line: "Hostname=administrator"
+    state: present
+    backup: yes
+  become: yes
+
+- name: 3. Configure Firewalld to allow Zabbix Server access (Port 10050/TCP)
+  ansible.posix.firewalld:
+    port: 10050/tcp
+    zone: public
+    permanent: yes
+    state: enabled
+  become: yes
+
+- name: 4. Restart Zabbix Agent Service
+  ansible.builtin.systemd:
+    name: zabbix-agent
+    state: restarted
+    enabled: yes
+  become: yes
+
