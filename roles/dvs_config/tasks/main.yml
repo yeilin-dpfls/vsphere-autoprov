@@ -60,7 +60,22 @@
     state: present
   delegate_to: localhost
 
-- name: 5. Create DPG-manage (VLAN 90)
+- name: 5. Create DPG-nginx-backend (VLAN 40)
+  community.vmware.vmware_dvs_portgroup:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    switch_name: "{{ dvs_name }}"
+    portgroup_name: "{{ pg_nginx_backend }}"
+    num_ports: 120
+    port_binding: ephemeral
+    vlan_id: "{{ vlan_nginx_backend}}" # VLAN 40
+    state: present
+  delegate_to: localhost
+
+
+- name: 6. Create DPG-manage (VLAN 90)
   community.vmware.vmware_dvs_portgroup:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -75,7 +90,7 @@
   delegate_to: localhost
 
 # 6. Attach ESXi Hosts to DVS
-- name: 6. Attach ESXi Hosts to DVS
+- name: 7. Attach ESXi Hosts to DVS
   throttle: 1
   community.vmware.vmware_dvs_host:
     hostname: "{{ vcenter_hostname }}"
@@ -89,14 +104,15 @@
   loop:
     - 10.10.10.4
     - 10.10.10.5
+
 # 7. 잠시 대기 (호스트 등록 완료)
-- name: 7. Wait for host registration
+- name: 8. Wait for host registration
   pause:
     seconds: 10
     prompt: "호스트가 DVS에 등록되었습니다. 10초 대기 중..."
 
 # 8. Add vmnic2/3 to DVS uplinks
-- name: 8. Add vmnic2/3 to DVS uplinks (vmnic 추가)
+- name: 9. Add vmnic2/3 to DVS uplinks (vmnic 추가)
   throttle: 1
   community.vmware.vmware_dvs_host:
     hostname: "{{ vcenter_hostname }}"
@@ -115,7 +131,7 @@
     - 10.10.10.5
 
 # 9. 완료 메시지
-- name: 9. DVS Configuration Complete
+- name: 10. DVS Configuration Complete
   debug:
     msg: |
       ✓ DVS 설정 완료!

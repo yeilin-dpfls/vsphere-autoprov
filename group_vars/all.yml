@@ -9,11 +9,14 @@ vcenter_folder: /Datacenter00/vm
 # Datastore 할당 (VMware VM 생성 시 사용)
 vyos_datastore: NFS
 linux_datastore: NFS
+backend_datastore: datastore2
 
 # VM 템플릿 이름 
 vyos_template_name: vyos-template
 mail_server_template_name: mail-server-template
-nginx_server_template_name: nginx-server-template
+nginx_server_template_name: nginx-server-template-demo
+nginx_backend_02_template_name: nginx-template-02
+nginx_backend_03_template_name: nginx-template-03
 
 
 # DVS 이름 설정 
@@ -27,10 +30,12 @@ pg_manage: DPG-manage
 pg_vyos_inside: DPG-vyos-inside
 pg_mail_server: DPG-mail-server
 pg_nginx_server: DPG-nginx-server  
+pg_nginx_backend: DPG-nginx-backend
 vlan_manage: 90
 vlan_vyos_inside: 4094
 vlan_mail_server: 20 
-vlan_nginx_server: 30  
+vlan_nginx_server: 30
+vlan_nginx_backend: 40 
 
 
 # --- VyOS Router VM 설정 (VM Provisioning & Network Config Role 사용) ---
@@ -56,12 +61,26 @@ mail_ssh_pass: "P@ssw0rd"
 mail_ip: 172.16.2.100/24                     # VLAN 20
 mail_gateway: 172.16.2.1
 
-# --- Linux Server 설정 (Nginx용) ---
+# --- Linux Server 설정 ---
 nginx_server_vm_name: nginx-server-01
 nginx_os_user: root
 nginx_ssh_pass: "P@ssw0rd"
 nginx_ip: 172.16.3.100/24                        # VLAN 30
 nginx_gateway: 172.16.3.1
+
+# ---Backend Server02 설정 ---
+nginx_backend_02_vm_name: nginx-backend-02
+nginx_backend_02_os_user: root
+nginx_backend_02_ssh_pass: "P@ssw0rd"
+nginx_backend_02_ip: 192.168.130.2/24                       
+nginx_backend_02_gateway: 192.168.130.1
+
+# ---Backend Server03 설정 ---
+nginx_backend_03_vm_name: nginx-backend-03
+nginx_backend_03_os_user: root
+nginx_backend_03_ssh_pass: "P@ssw0rd"
+nginx_backend_03_ip: 192.168.130.3/24                       
+nginx_backend_03_gateway: 192.168.130.1
 
 # [⭐ 새로 추가] VLAN별 서브 인터페이스 게이트웨이 IP
 vyos_gw_vlan4094: 172.16.1.1/24                    # eth1.10 (VyOS NIC 10번 서브 인터페이스)
