@@ -4,5 +4,9 @@
 - name: Install and start Nginx service on the VM
   import_tasks: install.yml # Nginx 설치 및 시작
 
+# [⭐ 추가된 부분] Nginx 설치 전에 네트워크 설정이 완료되어야 합니다.
+- name: Configure permanent IP Alias and DNAT rules
+  import_tasks: setup_ip_aliases.yml # IP Alias, DNAT 규칙 추가 및 영구 저장
+
 - name: Deploy Nginx configuration file and prepare webroot
   import_tasks: configure.yml # 설정 파일 배포 및 웹 루트 생성 (핸들러 호출)

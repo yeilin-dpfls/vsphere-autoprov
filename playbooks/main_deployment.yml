@@ -22,7 +22,7 @@
 
 - name: 4. Deploy Nginx Application 
   hosts: linux_server
-  gather_facts: no
+  gather_facts: yes
   vars_files:
     - ../group_vars/all.yml
   roles:
