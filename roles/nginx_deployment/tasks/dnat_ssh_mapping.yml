@@ -1,0 +1,46 @@
+# roles/nginx_deployment/tasks/dnat_ssh_mapping.yml 수정본
+---
+- name: 🚀 Nginx 서버에 firewalld 기반 DNAT (포트 포워딩) 규칙 추가
+  # hosts.ini의 [linux_server] 그룹을 타겟으로 지정합니다.
+  hosts: linux_server
+  become: true
+
+  vars:
+    dnat_protocol: "tcp"
+    dnat_port: "22" 
+    
+    # ⚠️ [수정 필요] group_vars/all.yml에 이 변수가 없으므로, DNAT 외부 IP는 Playbook 내에서 하드코딩해야 합니다.
+    # Nginx ens34 NIC에 할당될/할당된 가상 IP로 가정하고 하드코딩합니다.
+    external_ip_2: "172.16.3.2" 
+    external_ip_3: "172.16.3.3"
+    
+    # [⭐ 수정] group_vars의 변수를 참조하고 서브넷 마스크('/24')를 제거하여 IP 주소만 추출합니다.
+    internal_ip_2: "{{ nginx_backend_02_ip | split('/') | first }}" # -> "192.168.130.2"
+    internal_ip_3: "{{ nginx_backend_03_ip | split('/') | first }}" # -> "192.168.130.3"
+
+  tasks:
+    - name: 1. Public Zone에 Masquerade 활성화 (DNAT를 위해 필수)
+      ansible.builtin.command: sudo firewall-cmd --zone=public --add-masquerade --permanent
+      # already set 오류는 무시
+      ignore_errors: yes
+
+    - name: 2. SSH DNAT ({{ external_ip_2 }} -> {{ internal_ip_2 }}) 추가
+      ansible.builtin.command: >
+        sudo firewall-cmd 
+        --zone=public 
+        --add-forward-port=port={{ dnat_port }}:proto={{ dnat_protocol }}:toport={{ dnat_port }}:toaddr={{ internal_ip_2 }}
+        --permanent
+        --destination-address={{ external_ip_2 }} 
+      ignore_errors: yes
+
+    - name: 3. SSH DNAT ({{ external_ip_3 }} -> {{ internal_ip_3 }}) 추가
+      ansible.builtin.command: >
+        sudo firewall-cmd 
+        --zone=public 
+        --add-forward-port=port={{ dnat_port }}:proto={{ dnat_protocol }}:toport={{ dnat_port }}:toaddr={{ internal_ip_3 }}
+        --permanent
+        --destination-address={{ external_ip_3 }} 
+      ignore_errors: yes
+      
+    - name: 4. firewalld 규칙 재로딩 (영구 적용)
+      ansible.builtin.command: sudo firewall-cmd --reload

@@ -1,0 +1,44 @@
+---
+- name: ⚙️ Nginx 서버에 DNAT용 IP Alias 설정 (ens34:2, ens34:3)
+  hosts: linux_server
+  become: true
+
+  vars:
+    # group_vars/all.yml에 정의된 변수 참조
+    alias_ip_2: "{{ nginx_dnat_external_ip_2 }}" # 172.16.3.2
+    alias_ip_3: "{{ nginx_dnat_external_ip_3 }}" # 172.16.3.3
+    main_interface: "ens34"  
+    netmask: 255.255.255.0 # VLAN 30 (172.16.3.0/24)의 넷마스크 가정
+
+  tasks:
+    - name: 1. ifcfg-ens34:2 Alias 설정 파일 생성/수정
+      ansible.builtin.template:
+        src: ifcfg-alias.j2  # 템플릿 파일 이름
+        dest: /etc/sysconfig/network-scripts/ifcfg-ens34:2
+        owner: root
+        group: root
+        mode: '0644'
+      # 이 태스크는 재부팅 후에도 설정을 유지합니다.
+
+    - name: 2. ifcfg-ens34:3 Alias 설정 파일 생성/수정
+      ansible.builtin.template:
+        src: ifcfg-alias.j2
+        dest: /etc/sysconfig/network-scripts/ifcfg-ens34:3
+        owner: root
+        group: root
+        mode: '0644'
+      # 템플릿 변수로 alias_ip_3와 netmask를 전달합니다.
+
+    - name: 3. 네트워크 서비스 재시작 (설정 적용)
+      ansible.builtin.service:
+        name: network
+        state: restarted
+      # 또는 최신 시스템은 'NetworkManager'를 재시작
+
+    - name: 4. Alias 설정 확인 (선택 사항)
+      ansible.builtin.command: ip addr show ens34
+      register: ip_status
+      changed_when: false
+    
+    - ansible.builtin.debug:
+        var: ip_status.stdout_lines

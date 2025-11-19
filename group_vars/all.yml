@@ -47,13 +47,6 @@ vyos_eth1_ip: 172.16.1.100/16                   # Inside NIC IP
 vyos_default_gateway: 10.0.0.1                  # Default Route Next-Hop
 vyos_ssh_port: 22
 
-# ---linux VM 설정 (VM Provisioning & Nginx Role 사용) ---
-#linux_vm_name: linux
-#linux_os_user: root                  # Nginx VM에 설정된 SSH 접속 사용자
-#linux_ssh_pass: "VMware1!"    # Nginx VM SSH 비밀번호
-#linux_ip: 172.16.3.100/16                       # Nginx VM 최종 내부 IP
-#linux_gateway: 172.16.1.100                     # VyOS Inside IP (Nginx VM의 게이트웨이)
-
 # --- Mail Server 설정 ---
 mail_server_vm_name: mail-server-01
 mail_os_user: root
@@ -82,7 +75,12 @@ nginx_backend_03_ssh_pass: "P@ssw0rd"
 nginx_backend_03_ip: 192.168.130.3/24                       
 nginx_backend_03_gateway: 192.168.130.1
 
-# [⭐ 새로 추가] VLAN별 서브 인터페이스 게이트웨이 IP
+nginx_dnat_external_ip_2: 172.16.3.2
+nginx_dnat_external_ip_3: 172.16.3.3
+
+
+
+# VLAN별 서브 인터페이스 게이트웨이 IP
 vyos_gw_vlan4094: 172.16.1.1/24                    # eth1.10 (VyOS NIC 10번 서브 인터페이스)
 vyos_gw_vlan20: 172.16.2.1/24                    # eth1.20 (Mail Server GW)
 vyos_gw_vlan30: 172.16.3.1/24                    # eth1.30 (Nginx Server GW)
