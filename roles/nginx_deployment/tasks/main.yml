@@ -1,5 +1,18 @@
 ---
 # roles/nginx_deployment/tasks/main.yml
+- name: 0.X. Set SELinux to Permissive mode (setenforce 0) on LB Server
+  ansible.builtin.shell: sed -i 's/^SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config
+  # SELinux가 Enforcing 상태가 아니거나 설치되지 않은 경우 에러 방지
+  ignore_errors: true
+  become: true
+
+- name: 0.Y. Stop and disable firewalld service (LB Server)
+  ansible.builtin.systemd:
+    name: firewalld
+    state: stopped
+    enabled: no
+  ignore_errors: true
+  become: true
 
 - name: Install and start Nginx service on the VM
   import_tasks: install.yml # Nginx 설치 및 시작

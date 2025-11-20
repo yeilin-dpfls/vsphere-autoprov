@@ -1,0 +1,115 @@
+---
+# roles/nginx_backend/tasks/main.yml
+# --- 0. 방화벽 및 SELinux 임시 비활성화 (LB 통신 확보 목적) ---
+
+# roles/nginx_backend/tasks/main.yml (변수 설정 부분)
+- name: Set facts for backend server configuration
+  ansible.builtin.set_fact:
+    backend_ip: "{{ '192.168.130.2' if 'nginx-backend-02' in inventory_hostname else '192.168.130.3' }}"
+    backend_netmask: "255.255.255.0"
+    backend_gw_ip: "192.168.130.1"
+    content_name: "{{ 'web-100' if 'nginx-backend-02' in inventory_hostname else 'web-101' }}"
+    backend_nic_name: "ens37" # ⬅️ 이 변수가 정의되어 있어야 합니다!
+
+- name: 0.2. Run combined troubleshooting commands (Firewall/SELinux persistence)
+  ansible.builtin.shell: |
+    /usr/bin/chmod 755 /etc/rc.d/rc.local
+    echo "setenforce 0" >> /etc/rc.d/rc.local
+  # 태스크 0.1 (set_fact) 바로 다음
+  ignore_errors: true
+  become: true
+      
+# -------------------------------------------------------------------
+# 1. 네트워크 설정 배포
+# -------------------------------------------------------------------
+- name: Configure backend NIC ({{ backend_nic_name }}) with static IP and Gateway
+  ansible.builtin.template:
+    src: ifcfg-backend.j2
+    dest: "/etc/sysconfig/network-scripts/ifcfg-{{ backend_nic_name }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart network service
+
+- name: Set SELinux to Permissive mode (setenforce 0) on LB Server
+  ansible.builtin.shell: sed -i 's/^SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config
+  # SELinux가 Enforcing 상태가 아니거나 설치되지 않은 경우 에러 방지
+  ignore_errors: true
+  become: true
+
+
+- name: Stop and disable firewalld service (LB Server)
+  ansible.builtin.systemd:
+    name: firewalld
+    state: stopped
+    enabled: no
+  ignore_errors: true
+  become: true
+
+# -------------------------------------------------------------------
+# 2. 웹 루트 디렉토리 생성 및 고유 콘텐츠 배포
+# -------------------------------------------------------------------
+- name: Ensure backend web root exists
+  ansible.builtin.file:
+    path: /var/www/html/{{ content_name }}
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy index.html with unique content name
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: /var/www/html/{{ content_name }}/index.html
+    owner: root
+    group: root
+    mode: '0644'
+
+# -------------------------------------------------------------------
+# 3. Nginx 설치 및 설정 파일 배포 (백엔드용)
+#    - backend는 웹서버 역할이므로 nginx 설치/서비스 활성화 필요
+#    - backend의 conf 파일은 LB서버의 default.conf와 충돌하지 않도록
+#      /etc/nginx/conf.d/default_http.conf 로 배포합니다.
+# -------------------------------------------------------------------
+- name: Ensure facts are gathered
+  ansible.builtin.setup:
+  when: ansible_facts is not defined
+
+- name: Deploy backend http config (avoid overwriting LB config)
+  ansible.builtin.template:
+    src: default_http.conf.j2
+    dest: /etc/nginx/conf.d/default_http.conf
+    owner: root
+    group: root
+    mode: '0644'
+  register: backend_nginx_conf
+  notify: Reload nginx service
+
+# -------------------------------------------------------------------
+# 4. SELinux / 방화벽 (선택적, best-effort)
+# -------------------------------------------------------------------
+#- name: Ensure HTTP port 80 is allowed by firewalld (RHEL family)
+#  ansible.builtin.firewalld:
+#    service: http
+#    permanent: true
+#    state: enabled
+#    immediate: true
+#  when: ansible_facts.os_family | default('') == 'RedHat'
+#  ignore_errors: true
+
+#- name: Ensure UFW allows 80/tcp (Debian/Ubuntu)
+#  ansible.builtin.command: ufw allow 80/tcp
+#  when: ansible_facts.os_family | default('') == 'Debian'
+#  changed_when: false
+#  ignore_errors: true
+
+# -------------------------------------------------------------------
+# (선택) 5. 검증 태스크 (정보 출력)
+# -------------------------------------------------------------------
+- name: Show backend info (debug)
+  ansible.builtin.debug:
+    msg:
+      - "backend: {{ inventory_hostname }} -> {{ backend_ip }}"
+      - "content: {{ content_name }}"
+      - "nginx_conf_changed: {{ backend_nginx_conf.changed if backend_nginx_conf is defined else 'n/a' }}"
+

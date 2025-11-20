@@ -13,8 +13,8 @@
 # 0.2. internal_ip 변수 정의 (기존 유지)
 - name: 0.2. internal IP 변수 설정 (backend_web_servers 그룹의 IP 사용)
   ansible.builtin.set_fact:
-    internal_ip_2: "{{ hostvars['nginx-backend-02']['ansible_host'] }}"
-    internal_ip_3: "{{ hostvars['nginx-backend-03']['ansible_host'] }}"
+    internal_ip_2: "192.168.130.2"
+    internal_ip_3: "192.168.130.3"
 
 
 # 🌟 [수정] 1.3. ifconfig 두 명령어를 하나의 shell 태스크에 박아 넣기
@@ -46,3 +46,13 @@
 - name: 2.4. 💾 IPTables 규칙 영구 저장 (핵심)
   ansible.builtin.shell: iptables-save > /etc/sysconfig/iptables
   become: true
+
+- name: 2.5 selinux
+  ansible.builtin.command: >
+    sudo setenforce 0
+  become: true
+  ignore_errors: yes
+
+
+
+

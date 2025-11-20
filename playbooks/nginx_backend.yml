@@ -1,0 +1,12 @@
+# nginx_backend.yml (컨트롤 노드에 생성할 파일)
+
+---
+- name: Deploy and Configure Nginx Backend Servers
+  # 🚨 hosts: 인벤토리 파일에서 백엔드 서버가 속한 그룹 이름으로 변경하세요.
+  #           (예: webservers, backend_group, etc.)
+  hosts: backend_web_servers 
+  gather_facts: yes
+  become: yes             # 루트 권한으로 실행
+
+  roles:
+    - nginx_backend       # roles/nginx_backend 디렉토리를 호출합니다.
