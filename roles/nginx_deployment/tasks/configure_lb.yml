@@ -1,0 +1,31 @@
+---
+- name: Ensure Lua config directory exists
+  ansible.builtin.file:
+    path: /etc/nginx/lua
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy Lua script for page cycling
+  ansible.builtin.copy:
+    dest: "{{ nginx_lua_conf_path }}"
+    content: |
+      local pages = { {% for page in nginx_cycle_pages %}"{{ page }}",{% endfor %} }
+      local idx = tonumber(ngx.var.cookie_idx) or 1
+      ngx.header["Set-Cookie"] = "idx="..idx.."; Path=/"
+      ngx.say(pages[idx])
+      idx = idx % #pages + 1
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Deploy Nginx config to use Lua page cycling
+  ansible.builtin.template:
+    src: lb_page_cycle.conf.j2
+    dest: /etc/nginx/conf.d/lb.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Nginx
+

@@ -1,0 +1,148 @@
+---
+- name: /etc/postfix/main.cf에 설정 블록 추가 (기존 내용 유지)
+  blockinfile:
+    path: /etc/postfix/main.cf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      myhostname = mail.psh.ke
+      mydomain = psh.ke
+      myorigin = $mydomain
+      inet_interfaces = all
+      mydestination = $myhostname, localhost, $mydomain
+      mynetworks = 0.0.0.0/0
+      home_mailbox = Maildir/
+
+- name: Set protocols in /etc/dovecot/dovecot.conf
+  lineinfile:
+    path: /etc/dovecot/dovecot.conf
+    regexp: '^#?protocols ='
+    line: 'protocols = pop3'
+
+- name: Set listen in /etc/dovecot/dovecot.conf
+  lineinfile:
+    path: /etc/dovecot/dovecot.conf
+    regexp: '^#?listen ='
+    line: 'listen = *, ::'
+
+- name: Set base_dir in /etc/dovecot/dovecot.conf
+  lineinfile:
+    path: /etc/dovecot/dovecot.conf
+    regexp: '^#?base_dir ='
+    line: 'base_dir = /var/run/dovecot'
+
+- name: Configure mail_location in /etc/dovecot/conf.d/10-mail.conf
+  lineinfile:
+    path: /etc/dovecot/conf.d/10-mail.conf
+    regexp: '^#?mail_location ='
+    line: 'mail_location = maildir:~/Maildir'
+
+- name: Disable plaintext auth restriction in /etc/dovecot/conf.d/10-auth.conf
+  lineinfile:
+    path: /etc/dovecot/conf.d/10-auth.conf
+    regexp: '^disable_plaintext_auth ='
+    line: 'disable_plaintext_auth = no'
+
+- name: Disable SSL in /etc/dovecot/conf.d/10-ssl.conf
+  lineinfile:
+    path: /etc/dovecot/conf.d/10-ssl.conf
+    regexp: '^#?ssl ='
+    line: 'ssl = yes'
+
+- name: 주석 처리 - 기존 ssl_cert, ssl_key 설정 (/etc/dovecot/conf.d/10-ssl.conf)
+  replace:
+    path: /etc/dovecot/conf.d/10-ssl.conf
+    regexp: '^(ssl_cert|ssl_key)\s*=.*'
+    replace: '# \g<0>'
+
+- name: Disable firewalld (firewall)
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+- name: Enable and start postfix
+  systemd:
+    name: postfix
+    enabled: yes
+    state: started
+
+- name: Enable and start dovecot
+  systemd:
+    name: dovecot
+    enabled: yes
+    state: started
+
+- name: Create user with password
+  user:
+    name: "test"
+    password: "{{ 'P@ssw0rd' | password_hash('sha512') }}"
+    state: present
+    shell: /bin/bash
+    create_home: yes
+
+- name: Distribute SSH public key to user authorized_keys
+  authorized_key:
+    user: "test"
+    state: present
+    key: "{{ lookup('file', ssh_pub_key_path) }}"
+
+- name: Ensure /etc/pki/tls/private directory exists
+  file:
+    path: /etc/pki/tls/private
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: 자체 서버 인증서 생성 (있으면 skip)
+  command: >
+    openssl req -newkey rsa:2048 -x509 -days 365 -nodes
+    -out /etc/pki/tls/certs/mailserver.pem
+    -keyout /etc/pki/tls/private/mailserver.key
+    -subj "/C=KR/ST=Seoul/L=Gangnam-gu/O=Company/OU=IT/CN=mail.psh.ke/emailAddress="
+    -addext basicConstraints=CA:FALSE
+    -addext keyUsage=digitalSignature,keyEncipherment
+    -addext extendedKeyUsage=serverAuth
+  args:
+    creates: /etc/pki/tls/certs/mailserver.pem
+
+- name: 인증서 개인키 권한 설정
+  file:
+    path: /etc/pki/tls/private/mailserver.key
+    mode: '0600'
+
+- name: /etc/postfix/main.cf에 TLS 설정 블록 추가
+  blockinfile:
+    path: /etc/postfix/main.cf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK TLS CONFIG"
+    block: |
+      smtpd_tls_cert_file = /etc/pki/tls/certs/mailserver.pem
+      smtpd_tls_key_file = /etc/pki/tls/private/mailserver.key
+      smtp_tls_cert_file = /etc/pki/tls/certs/mailserver.pem
+      smtp_tls_key_file = /etc/pki/tls/private/mailserver.key
+      smtpd_use_tls = yes
+      smtpd_tls_security_level = may
+      smtp_tls_security_level = may
+      smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
+      smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+      smtpd_tls_note_starttls_offer = yes
+      
+- name: /etc/dovecot/conf.d/10-ssl.conf 인증서 경로 설정
+  blockinfile:
+    path: /etc/dovecot/conf.d/10-ssl.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK SSL CERT"
+    block: |
+      ssl_cert = </etc/pki/tls/certs/mailserver.pem
+      ssl_key = </etc/pki/tls/private/mailserver.key
+
+- name: Restart postfix service
+  systemd:
+    name: postfix
+    state: restarted
+
+- name: Restart dovecot service
+  systemd:
+    name: dovecot
+    state: restarted
+
+

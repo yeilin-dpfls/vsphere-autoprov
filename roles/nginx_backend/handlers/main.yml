@@ -1,0 +1,12 @@
+---
+# roles/nginx_backend/handlers/main.yml
+
+- name: Restart network service
+  ansible.builtin.service:
+    name: "{{ 'NetworkManager' if (ansible_facts['os_family'] == 'RedHat' and (ansible_facts['distribution_major_version'] | int) >= 8) else 'network' }}"
+    state: restarted
+
+- name: Reload nginx service
+  ansible.builtin.systemd:
+    name: nginx
+    state: reloaded

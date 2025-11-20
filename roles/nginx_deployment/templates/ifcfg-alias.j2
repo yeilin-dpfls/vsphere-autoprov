@@ -1,0 +1,8 @@
+# ifcfg-alias.j2
+DEVICE={{ main_interface }}:{{ alias_index }}
+BOOTPROTO=static
+ONBOOT=yes
+IPADDR={{ alias_ip }}
+NETMASK={{ netmask }}
+TYPE=Ethernet
+USERCTL=no

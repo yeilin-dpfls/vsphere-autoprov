@@ -1,0 +1,46 @@
+# autoprov/vsphere-autoprov/playbooks/main_deployment.yml
+---
+- name: 1. Configure Distributed Switch and Port Groups (Infrastructure Phase)
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml 
+  roles:
+    - dvs_config     # [1순위] DVS 생성 및 DPG 생성 실행
+
+- name: 2. VM Provisioning Playbook (VM이 존재하면 건너뜀)
+  import_playbook: provision_vms.yml
+
+- name: 3. Configure VyOS Router Network 
+  hosts: vyos_router
+  gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml 
+  roles:
+    - vyos_network
+
+- name: 4. Deploy Nginx Application 
+  hosts: linux_server
+  gather_facts: yes
+  vars_files:
+    - ../group_vars/all.yml
+  roles:
+    - nginx_deployment
+
+- name: 4.5. Deploy Nginx Backend Servers
+  hosts: backend_servers # ⬅️ 백엔드 서버 그룹으로 변경하세요 (예: nginx_backends)
+  gather_facts: yes
+  vars_files:
+    - ../group_vars/all.yml
+  roles:
+    - nginx_backend # ⬅️ 백엔드 서버 역할을 실행합니다.
+
+      
+- name: 5. Deploy Mail Server Application (Mail 담당자 영역)
+  hosts: mailservers
+  gather_facts: no
+  vars_files:
+   - ../group_vars/all.yml
+  roles:
+   - mail_server_deployment

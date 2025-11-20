@@ -1,0 +1,39 @@
+# 1. Upstream (백엔드 서버 목록 정의)
+upstream backend_servers {
+    server 192.168.130.2:80 weight=1; 
+    server 192.168.130.3:80 weight=1;
+}
+
+# -----------------------------------------------
+# 1. HTTP (80)에서 HTTPS (443)로 강제 리다이렉트
+# -----------------------------------------------
+server {
+    listen {{ nginx_listen_port }}; # 80 포트
+    server_name {{ nginx_server_name }};
+    return 301 https://$host$request_uri;
+}
+
+# -----------------------------------------------
+# 2. HTTPS (443) 실제 서비스 서버 블록
+# -----------------------------------------------
+server {
+    listen 443 ssl;  # <-- 443 포트와 SSL 활성화
+    server_name {{ nginx_server_name }};
+
+    # SSL 인증서 경로 지정
+    ssl_certificate /etc/nginx/ssl/server.crt;
+    ssl_certificate_key /etc/nginx/ssl/server.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    root {{ nginx_root_path }};
+    index {{ nginx_index_file }};
+
+    location / {
+        proxy_pass http://backend_servers;
+        
+        # 클라이언트의 실제 IP 주소를 백엔드 서버로 전달하기 위한 헤더 설정
+        # proxy_set_header Host $host;
+        # proxy_set_header X-Real-IP $remote_addr;
+        # proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}

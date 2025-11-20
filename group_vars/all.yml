@@ -1,0 +1,87 @@
+# VCSA 접속 정보 (VMware API 통신용)
+vcenter_hostname: 10.10.10.3
+vcenter_username: administrator@vsphere.local
+vcenter_password: "VMware1!"         # 실제 VCSA 비밀번호로 변경 필요
+vcenter_datacenter: Datacenter00
+vcenter_cluster: Cluster-00            # 클러스터 이름으로 변경 필요
+vcenter_folder: /Datacenter00/vm
+
+# Datastore 할당 (VMware VM 생성 시 사용)
+vyos_datastore: NFS
+linux_datastore: NFS
+backend_datastore: datastore2
+
+# VM 템플릿 이름 
+vyos_template_name: vyos-template
+mail_server_template_name: mail-server-template
+nginx_server_template_name: nginx-server-template-demo
+nginx_backend_02_template_name: nginx-template-02
+nginx_backend_03_template_name: nginx-template-03
+
+
+# DVS 이름 설정 
+dvs_name: DSwitch-AUTO
+
+# Standard Switch Port Group (Vyos Outside NIC 연결용)
+standard_pg_outside: VM Network
+
+# DVS Port Group 및 VLAN ID 설정
+pg_manage: DPG-manage
+pg_vyos_inside: DPG-vyos-inside
+pg_mail_server: DPG-mail-server
+pg_nginx_server: DPG-nginx-server  
+pg_nginx_backend: DPG-nginx-backend
+vlan_manage: 90
+vlan_vyos_inside: 4094
+vlan_mail_server: 20 
+vlan_nginx_server: 30
+vlan_nginx_backend: 40 
+
+
+# --- VyOS Router VM 설정 (VM Provisioning & Network Config Role 사용) ---
+vyos_vm_name: vyos-router
+vyos_os_user: vyos                              # VyOS VM에 설정된 SSH 접속 사용자
+vyos_ssh_pass: "vyos"         # VyOS VM SSH 비밀번호
+vyos_eth2_ip: 10.10.10.18/8                     # Outside NIC IP
+vyos_eth1_ip: 172.16.1.100/16                   # Inside NIC IP
+vyos_default_gateway: 10.0.0.1                  # Default Route Next-Hop
+vyos_ssh_port: 22
+
+# --- Mail Server 설정 ---
+mail_server_vm_name: mail-server-01
+mail_os_user: root
+mail_ssh_pass: "P@ssw0rd"
+mail_ip: 172.16.2.100/24                     # VLAN 20
+mail_gateway: 172.16.2.1
+
+# --- Linux Server 설정 ---
+nginx_server_vm_name: nginx-server-01
+nginx_os_user: root
+nginx_ssh_pass: "P@ssw0rd"
+nginx_ip: 172.16.3.100/24                        # VLAN 30
+nginx_gateway: 172.16.3.1
+
+# ---Backend Server02 설정 ---
+nginx_backend_02_vm_name: nginx-backend-02
+nginx_backend_02_os_user: root
+nginx_backend_02_ssh_pass: "P@ssw0rd"
+nginx_backend_02_ip: 192.168.130.2/24                       
+nginx_backend_02_gateway: 192.168.130.1
+
+# ---Backend Server03 설정 ---
+nginx_backend_03_vm_name: nginx-backend-03
+nginx_backend_03_os_user: root
+nginx_backend_03_ssh_pass: "P@ssw0rd"
+nginx_backend_03_ip: 192.168.130.3/24                       
+nginx_backend_03_gateway: 192.168.130.1
+
+nginx_dnat_external_ip_2: 172.16.3.2
+nginx_dnat_external_ip_3: 172.16.3.3
+
+
+
+# VLAN별 서브 인터페이스 게이트웨이 IP
+vyos_gw_vlan4094: 172.16.1.1/24                    # eth1.10 (VyOS NIC 10번 서브 인터페이스)
+vyos_gw_vlan20: 172.16.2.1/24                    # eth1.20 (Mail Server GW)
+vyos_gw_vlan30: 172.16.3.1/24                    # eth1.30 (Nginx Server GW)
+vyos_gw_vlan90: 172.16.9.1/24                    # eth1.90 (manage)

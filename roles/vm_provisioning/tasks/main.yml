@@ -1,0 +1,54 @@
+---
+# tasks file for roles/vm_provisioning 
+#
+- name: Debug vm_nics variable
+  debug:
+    var: vm_nics
+
+- name: Create VM {{ vm_name }} from template and configure NICs
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ vcenter_datacenter }}"
+    cluster: "{{ vcenter_cluster }}"
+    folder: "{{ vcenter_folder }}"
+    name: "{{ vm_name }}"
+    template: "{{ vm_template }}"
+    datastore: "{{ vm_datastore }}"
+    force: yes
+    wait_for_ip_address: no
+    hardware:
+      memory_mb: 1024
+      num_cpus: 1
+  delegate_to: localhost # 이 작업은 VCSA API로 호출
+  register: vm_result
+
+# VM 생성 후 네트워크 어댑터 강제 재설정
+- name: Reconfigure network adapters for {{ vm_name }}
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ vcenter_datacenter }}"
+    name: "{{ vm_name }}"
+    networks: "{{ vm_nics }}"
+    state: present
+  delegate_to: localhost
+
+# VM 전원 켜기
+- name: Power on VM {{ vm_name }}
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ vm_name }}"
+    state: poweredon
+  delegate_to: localhost
+
+- name: Display VM creation status
+  debug:
+    msg: "VM '{{ vm_name }}' provisioning finished."

@@ -1,0 +1,97 @@
+---
+- name: 1. Provision VyOS and Linux Server VMs on vSphere
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars_files:
+      - ../group_vars/all.yml
+  
+  tasks:
+    # ----------------------------------------------------------------------
+    # A. VyOS Router VM 생성 (NIC 2개 연결)
+    # ----------------------------------------------------------------------
+    - name: Call vm_provisioning role for VyOS router
+      include_role:
+        name: vm_provisioning
+      vars:
+        vm_name: "{{ vyos_vm_name }}"
+        vm_template: "{{ vyos_template_name }}"
+        vm_datastore: "{{ vyos_datastore }}" 
+        vm_nics: 
+            #NIC 2 (Vyos OS : Network adapter 1): Standard Switch의 Port Group에 연결(Outside)
+          - name: "{{ standard_pg_outside }}" 
+            connected: true
+            start_connected: true
+            #NIC 1 (Vyos OS : Network adapter 2): 
+          - name: "{{ pg_vyos_inside }}"
+            connected: true
+            start_connected: true
+
+    # ----------------------------------------------------------------------
+    # B. Mail Server VM 생성 (NIC 1개 연결,DPG-mail-server)
+    # ----------------------------------------------------------------------
+    - name: Call vm_provisioning role for Mail Server
+      include_role:
+        name: vm_provisioning
+      vars:
+        vm_name: "{{ mail_server_vm_name }}"
+        vm_template: "{{ mail_server_template_name }}"
+        vm_datastore: "{{ linux_datastore }}"
+        vm_nics:
+          - name: "{{ pg_mail_server }}"   # NIC 1: (DPG-mail-server, VLAN 20)
+            connected: true
+            start_connected: true
+
+
+    # ----------------------------------------------------------------------
+    # C. Nginx Server VM 생성 (NIC 1개 연결, DPG-nginx-sever)
+    # ----------------------------------------------------------------------
+    - name: Call vm_provisioning role for Nginx Server
+      include_role:
+        name: vm_provisioning
+      vars:
+        vm_name: "{{ nginx_server_vm_name }}"
+        vm_template: "{{ nginx_server_template_name }}"
+        vm_datastore: "{{ linux_datastore }}" 
+        vm_nics: 
+          - name: "{{ pg_nginx_server }}" # NIC 1: (DPG-nginx_server, VLAN 30)
+            device_type: vmxnet3
+            connected: yes
+            start_connected: yes
+          - name: "{{ pg_nginx_backend }}" # NIC 1: (DPG-nginx_backend, VLAN 40)
+            device_type: vmxnet3
+            connected: yes
+            start_connected: yes
+
+    # ----------------------------------------------------------------------
+    # D-1. Nginx Backend Server02 VM 생성 (NIC 1개 연결, DPG-nginx-backend)
+    # ----------------------------------------------------------------------
+    - name: Call vm_provisioning role for Nginx Backend Server02
+      include_role:
+        name: vm_provisioning
+      vars:
+        vm_name: "{{ nginx_backend_02_vm_name }}"
+        vm_template: "{{ nginx_backend_02_template_name }}"
+        vm_datastore: "{{ backend_datastore }}"
+        vm_nics:
+          - name: "{{ pg_nginx_backend }}" 
+            device_type: vmxnet3
+            connected: yes
+            start_connected: yes
+    
+    # ----------------------------------------------------------------------
+    # D-2. Nginx Backend Server03 VM 생성 (NIC 1개 연결, DPG-nginx-backend)
+    # ----------------------------------------------------------------------
+    - name: Call vm_provisioning role for Nginx Backend Server03
+      include_role:
+        name: vm_provisioning
+      vars:
+        vm_name: "{{ nginx_backend_03_vm_name }}"
+        vm_template: "{{ nginx_backend_03_template_name }}"
+        vm_datastore: "{{ backend_datastore }}"
+        vm_nics:
+          - name: "{{ pg_nginx_backend }}" 
+            device_type: vmxnet3
+            connected: yes
+            start_connected: yes
