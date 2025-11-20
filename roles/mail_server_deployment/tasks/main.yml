@@ -42,6 +42,18 @@
     regexp: '^disable_plaintext_auth ='
     line: 'disable_plaintext_auth = no'
 
+- name: Disable SSL in /etc/dovecot/conf.d/10-ssl.conf
+  lineinfile:
+    path: /etc/dovecot/conf.d/10-ssl.conf
+    regexp: '^#?ssl ='
+    line: 'ssl = yes'
+
+- name: 주석 처리 - 기존 ssl_cert, ssl_key 설정 (/etc/dovecot/conf.d/10-ssl.conf)
+  replace:
+    path: /etc/dovecot/conf.d/10-ssl.conf
+    regexp: '^(ssl_cert|ssl_key)\s*=.*'
+    replace: '# \g<0>'
+
 - name: Disable firewalld (firewall)
   service:
     name: firewalld
@@ -74,12 +86,23 @@
     state: present
     key: "{{ lookup('file', ssh_pub_key_path) }}"
 
-- name: 자체 인증서 생성 (있으면 skip)
+- name: Ensure /etc/pki/tls/private directory exists
+  file:
+    path: /etc/pki/tls/private
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: 자체 서버 인증서 생성 (있으면 skip)
   command: >
-    openssl req -new -x509 -days 365 -nodes
+    openssl req -newkey rsa:2048 -x509 -days 365 -nodes
     -out /etc/pki/tls/certs/mailserver.pem
     -keyout /etc/pki/tls/private/mailserver.key
     -subj "/C=KR/ST=Seoul/L=Gangnam-gu/O=Company/OU=IT/CN=mail.psh.ke/emailAddress="
+    -addext basicConstraints=CA:FALSE
+    -addext keyUsage=digitalSignature,keyEncipherment
+    -addext extendedKeyUsage=serverAuth
   args:
     creates: /etc/pki/tls/certs/mailserver.pem
 
@@ -95,28 +118,22 @@
     block: |
       smtpd_tls_cert_file = /etc/pki/tls/certs/mailserver.pem
       smtpd_tls_key_file = /etc/pki/tls/private/mailserver.key
-      smtp_tls_cert_file = /etc/ssl/certs/mail_psh_ke.pem
-      smtp_tls_key_file = /etc/ssl/private/mail_psh_ke.key
+      smtp_tls_cert_file = /etc/pki/tls/certs/mailserver.pem
+      smtp_tls_key_file = /etc/pki/tls/private/mailserver.key
       smtpd_use_tls = yes
       smtpd_tls_security_level = may
       smtp_tls_security_level = may
       smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
       smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
-      smtp_tls_note_starttls_offer = yes
-
-- name: /etc/dovecot/conf.d/10-ssl.conf SSL 설정
-  lineinfile:
-    path: /etc/dovecot/conf.d/10-ssl.conf
-    regexp: '^#?ssl ='
-    line: 'ssl = yes'
-
+      smtpd_tls_note_starttls_offer = yes
+      
 - name: /etc/dovecot/conf.d/10-ssl.conf 인증서 경로 설정
   blockinfile:
     path: /etc/dovecot/conf.d/10-ssl.conf
     marker: "# {mark} ANSIBLE MANAGED BLOCK SSL CERT"
     block: |
-      ssl_cert = </etc/ssl/certs/mail_psh_ke.pem
-      ssl_key = </etc/ssl/private/mail_psh_ke.key
+      ssl_cert = </etc/pki/tls/certs/mailserver.pem
+      ssl_key = </etc/pki/tls/private/mailserver.key
 
 - name: Restart postfix service
   systemd:
