@@ -5,7 +5,7 @@
   # 🚨 hosts: 인벤토리 파일에서 백엔드 서버가 속한 그룹 이름으로 변경하세요.
   #           (예: webservers, backend_group, etc.)
   hosts: backend_web_servers 
-  gather_facts: no
+  gather_facts: yes
   become: yes             # 루트 권한으로 실행
 
   roles:

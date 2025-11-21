@@ -8,10 +8,6 @@
     backend_ip: "{{ '192.168.130.2' if 'nginx-backend-02' in inventory_hostname else '192.168.130.3' }}"
     backend_netmask: "255.255.255.0"
     backend_gw_ip: "192.168.130.1"
-<<<<<<< HEAD
-    content_name: "{{ 'web-100' if 'nginx-backend-02' in inventory_hostname else 'web-101' }}"
-=======
->>>>>>> origin/develop
     backend_nic_name: "ens37" # ⬅️ 이 변수가 정의되어 있어야 합니다!
 
 - name: 0.2. Run combined troubleshooting commands (Firewall/SELinux persistence)
@@ -52,20 +48,6 @@
 # -------------------------------------------------------------------
 # 2. 웹 루트 디렉토리 생성 및 고유 콘텐츠 배포
 # -------------------------------------------------------------------
-<<<<<<< HEAD
-- name: Ensure backend web root exists
-  ansible.builtin.file:
-    path: /var/www/html/{{ content_name }}
-    state: directory
-    owner: root
-    group: root
-    mode: '0755'
-
-- name: Deploy index.html with unique content name
-  ansible.builtin.template:
-    src: index.html.j2
-    dest: /var/www/html/{{ content_name }}/index.html
-=======
 #- name: Ensure backend web root exists
 #  ansible.builtin.file:
 #    path: /usr/share/nginx/html/index.html
@@ -78,7 +60,6 @@
   ansible.builtin.template:
     src: /root/vsphere-autoprov/roles/nginx_backend/templates/index.html.j2
     dest: /usr/share/nginx/html/index.html
->>>>>>> origin/develop
     owner: root
     group: root
     mode: '0644'
