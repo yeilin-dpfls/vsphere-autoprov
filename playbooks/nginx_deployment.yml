@@ -3,8 +3,8 @@
 - name: Install and configure Nginx on the existing linux-server (172.16.3.100)
   # 호스트를 인벤토리에 이미 정의된 'linux-server'로 지정합니다.
   hosts: linux-server 
-  
-  gather_facts: yes 
+
+  gather_facts: no 
   become: yes       
   
   vars_files:
