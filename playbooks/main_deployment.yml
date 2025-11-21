@@ -22,15 +22,15 @@
 
 - name: 4. Deploy Nginx Application 
   hosts: linux_server
-  gather_facts: yes
+  gather_facts: no
   vars_files:
     - ../group_vars/all.yml
   roles:
     - nginx_deployment
 
 - name: 4.5. Deploy Nginx Backend Servers
-  hosts: backend_servers # ⬅️ 백엔드 서버 그룹으로 변경하세요 (예: nginx_backends)
-  gather_facts: yes
+  hosts: backend_web_servers # ⬅️ 백엔드 서버 그룹으로 변경하세요 (예: nginx_backends)
+  gather_facts: no
   vars_files:
     - ../group_vars/all.yml
   roles:
